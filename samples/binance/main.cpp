@@ -22,9 +22,9 @@ int main()
     SetWebSocketAddTradeCallback(Handle, AddTrade);
     SetWebSocketUpdateCandleCallback(Handle, UpdateCandle);
     StartWebSocket(Handle);
-    std::this_thread::sleep_for(std::chrono::seconds(80));
+    std::this_thread::sleep_for(std::chrono::seconds(60));
 
     StopWebSocket(Handle);
-    //DeleteWebSocket(Handle);
+    DeleteWebSocket(Handle);
     return 0;
 }

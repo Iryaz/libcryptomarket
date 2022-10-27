@@ -49,11 +49,6 @@ void BaseWebSocket::Stop()
 {
     if (IsStart_ == false)
         return;
-    if (Thread_Ptr != nullptr) {
-        if (Thread_Ptr->joinable())
-            Thread_Ptr->join();
-        delete Thread_Ptr;
-    }
 
     IsStart_ = false;
 }

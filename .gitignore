@@ -18,3 +18,4 @@ release/
 release/*
 debug/*
 binance.exe
+/samples/samples.pro.user
