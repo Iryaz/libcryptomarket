@@ -9,6 +9,8 @@ object_script.libcryptomarket.Debug
 libcryptomarket.pro.user
 libcryptomarket.dll
 *.a
+!libcrypto.dll.a
+!libssl.dll.a
 dll/
 debug/
 release/
