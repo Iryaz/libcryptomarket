@@ -7,7 +7,6 @@ class BinanceWebSocket : public BaseWebSocket
 {
 public:
     BinanceWebSocket(const std::string& symbol, int subscribe_flags);
-    virtual ~BinanceWebSocket();
 
 protected:
     void SetSymbol(const std::string& symbol);

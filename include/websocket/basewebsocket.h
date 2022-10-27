@@ -22,7 +22,7 @@ public:
     } DataEventType;
 
     BaseWebSocket(const std::string& symbol, int subscribe_flags);
-    ~BaseWebSocket();
+    virtual ~BaseWebSocket();
 
     int GetSubscribeFlags()                             { return SubscribeFlags;    }
     void SetContext(void* context)                      { Context_ = context;       }

@@ -30,11 +30,6 @@ ByBitWebsocket::ByBitWebsocket(const std::string &symbol, int subscribe_flags) :
     Init(GetSubscribeFlags());
 }
 
-ByBitWebsocket::~ByBitWebsocket()
-{
-
-}
-
 void ByBitWebsocket::SetSymbol(const std::string& symbol)
 {
     Symbol_ = symbol;

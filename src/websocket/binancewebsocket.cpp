@@ -11,11 +11,6 @@ BinanceWebSocket::BinanceWebSocket(const std::string& symbol, int subscribe_flag
     Init(GetSubscribeFlags());
 }
 
-BinanceWebSocket::~BinanceWebSocket()
-{
-
-}
-
 void BinanceWebSocket::Init(int flag)
 {
     if (flag & MARKET_DEPTH_SUBSCRIBE)

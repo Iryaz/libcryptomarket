@@ -31,8 +31,11 @@ BaseWebSocket::BaseWebSocket(const std::string& symbol, int subscribe_flags)
 
 BaseWebSocket::~BaseWebSocket()
 {
-    if (Thread_Ptr != nullptr)
+    Stop();
+    if (Thread_Ptr != nullptr) {
+        Thread_Ptr->detach();
         delete Thread_Ptr;
+    }
 }
 
 void BaseWebSocket::SetPort(int port)
@@ -47,9 +50,6 @@ void BaseWebSocket::SetHost(const std::string& exchange_host)
 
 void BaseWebSocket::Stop()
 {
-    if (IsStart_ == false)
-        return;
-
     IsStart_ = false;
 }
 
@@ -100,6 +100,8 @@ bool BaseWebSocket::StartLoop()
         //std::cerr << "Error: " << e.what() << std::endl;
         return false;
     }
+
+    //std::this_thread::sleep_for(std::chrono::seconds(1));
 
     return true;
 }

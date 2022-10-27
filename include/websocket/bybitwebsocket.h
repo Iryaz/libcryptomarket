@@ -7,7 +7,6 @@ class ByBitWebsocket : public BaseWebSocket
 {
 public:
     ByBitWebsocket(const std::string& symbol, int subscribe_flags);
-    virtual ~ByBitWebsocket();
 
 protected:
     void Init(int flag);
