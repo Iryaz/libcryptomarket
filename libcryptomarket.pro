@@ -18,7 +18,6 @@ SOURCES += \
     src/binancefuturesexchange.cpp \
     src/consolelogger.cpp \
     src/exchangeobj.cpp \
-    src/loggerobj.cpp \
     src/symbol.cpp \
     src/websocket/basewebsocket.cpp \
     src/websocket/binancewebsocket.cpp \
@@ -27,9 +26,7 @@ SOURCES += \
 HEADERS += \
     include/binanceexchange.h \
     include/binancefuturesexchange.h \
-    include/consolelogger.h \
     include/exchangeobj.h \
-    include/loggerobj.h \
     include/websocket/basewebsocket.h \
     include/websocket/binancewebsocket.h \
     include/websocket/bybitwebsocket.h \

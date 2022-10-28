@@ -1,7 +1,10 @@
 ﻿
 #include "exchangeobj.h"
+#include <boost/format.hpp>
 #include <vector>
 #include <iostream>
+
+#define F(S) boost::format(S)
 
 #define JSON_PARSE \
     boost::json::stream_parser parser; \
@@ -43,16 +46,16 @@ timestamp_t ExchangeObj::GetServerTime()
     GetUrl(url, str_result);
     timestamp_t server_time = -1;
 
-    Log("<ExchangeObj::GetServerTime> Url: |%s|", url.c_str());
+    InfoMessage((F("<ExchangeObj::GetServerTime> Url: |%s|") % url.c_str()).str());
     if (str_result.size() > 0) {
         try {
             JSON_PARSE
             server_time = ParseServerTime(value);
         } catch(std::exception& e) {
-            Log("<ExchangeObj::GetServerTime> Error ! %s", e.what());
+            ErrorMessage((F("<ExchangeObj::GetServerTime> Error ! %s") % e.what()).str());
         }
     } else
-        Log("<ExchangeObj::GetServerTime> Failed to get anything.");
+        ErrorMessage("<ExchangeObj::GetServerTime> Failed to get anything.");
 
     curl_easy_reset(curl);
     return server_time;
@@ -65,16 +68,16 @@ bool ExchangeObj::GetExchangeInfo(ExchangeInfo &info)
     GetUrl(url, str_result);
     bool ret = false;;
 
-    Log("<ExchangeObj::GetExchangeInfo> Url: |%s|", url.c_str());
+    InfoMessage((F("<ExchangeObj::GetExchangeInfo> Url: |%s|") % url.c_str()).str());
     if (str_result.size() > 0) {
         try {
             JSON_PARSE
             ret = ParseExchangeInfo(value, info);
         } catch (std::exception& e) {
-            Log("<ExchangeObj::GetExchangeInfo> Error ! %s", e.what());
+            ErrorMessage((F("<ExchangeObj::GetExchangeInfo> Error ! %s") % e.what()).str());
         }
     } else
-        Log("<ExchangeObj::GetExchangeInfo> Failed to get anything.");
+        ErrorMessage("<ExchangeObj::GetExchangeInfo> Failed to get anything.");
 
 
     curl_easy_reset(curl);
@@ -83,7 +86,7 @@ bool ExchangeObj::GetExchangeInfo(ExchangeInfo &info)
 
 bool ExchangeObj::GetAllPrices(Prices &prices)
 {
-    Log("<ExchangeObj::GetAllPrices>");
+    InfoMessage("<ExchangeObj::GetAllPrices>");
     bool ret = false;
 
     string str_result;
@@ -95,10 +98,10 @@ bool ExchangeObj::GetAllPrices(Prices &prices)
             JSON_PARSE
             ret = ParseAllPrices(value, prices);
         } catch (std::exception& e) {
-            Log("<ExchangeObj::GetAllPrices> Error ! %s", e.what());
+            ErrorMessage((F("<ExchangeObj::GetAllPrices> Error ! %s") % e.what()).str());
         }
     } else {
-        Log("<ExchangeObj::GetAllPrices> Failed to get anything.");
+        ErrorMessage("<ExchangeObj::GetAllPrices> Failed to get anything.");
     }
 
     curl_easy_reset(curl);
@@ -108,7 +111,7 @@ bool ExchangeObj::GetAllPrices(Prices &prices)
 
 bool ExchangeObj::GetMarketDepth(const string& symbol, int limit, MarketDepth& Asks, MarketDepth& Bids, uint64_t& lastUpdateId)
 {
-    Log("<ExchangeObj::GetMarketDepth>");
+    InfoMessage("<ExchangeObj::GetMarketDepth>");
     bool ret = false;
 
     string str_result;
@@ -120,10 +123,10 @@ bool ExchangeObj::GetMarketDepth(const string& symbol, int limit, MarketDepth& A
             JSON_PARSE
             ret = ParseMarketDepth(value, Asks, Bids, lastUpdateId);
         } catch (std::exception& e) {
-            Log("<ExchangeObj::GetMarketDepth> Error ! %s", e.what());
+            ErrorMessage((F("<ExchangeObj::GetMarketDepth> Error ! %s") % e.what()).str());
         }
     } else {
-        Log("<ExchangeObj::GetMarketDepth> Failed to get anything.");
+        ErrorMessage("<ExchangeObj::GetMarketDepth> Failed to get anything.");
     }
 
     curl_easy_reset(curl);
@@ -133,7 +136,7 @@ bool ExchangeObj::GetMarketDepth(const string& symbol, int limit, MarketDepth& A
 
 bool ExchangeObj::GetTrades(const std::string& symbol, timestamp_t start_time, timestamp_t end_time, int limit, TradesList& trades)
 {
-    Log("<ExchangeObj::GetTrades>");
+    InfoMessage("<ExchangeObj::GetTrades>");
     bool ret = false;
 
     string str_result;
@@ -145,10 +148,10 @@ bool ExchangeObj::GetTrades(const std::string& symbol, timestamp_t start_time, t
             JSON_PARSE
             ret = ParseAggregateTradesList(value, trades);
         } catch (std::exception& e) {
-            Log("<ExchangeObj::GetTrades> Error ! %s", e.what());
+            ErrorMessage((F("<ExchangeObj::GetTrades> Error ! %s") % e.what()).str());
         }
     } else {
-        Log("<ExchangeObj::GetTrades> Failed to get anything.");
+        ErrorMessage("<ExchangeObj::GetTrades> Failed to get anything.");
     }
 
     curl_easy_reset(curl);
@@ -158,7 +161,7 @@ bool ExchangeObj::GetTrades(const std::string& symbol, timestamp_t start_time, t
 
 bool ExchangeObj::GetCandles(const string& symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit, CandlesList &candles)
 {
-    Log("<ExchangeObj::GetCandles>");
+    InfoMessage("<ExchangeObj::GetCandles>");
     bool ret = false;
 
     string str_result;
@@ -170,10 +173,10 @@ bool ExchangeObj::GetCandles(const string& symbol, TimeFrame tf, timestamp_t sta
             JSON_PARSE
             ret = ParseCandles(value, candles);
         } catch (std::exception& e) {
-            Log("<ExchangeObj::GetCandles> Error ! %s", e.what());
+            ErrorMessage((F("<ExchangeObj::GetCandles> Error ! %s") % e.what()).str());
         }
     } else {
-        Log("<ExchangeObj::GetCandles> Failed to get anything.");
+        ErrorMessage("<ExchangeObj::GetCandles> Failed to get anything.");
     }
 
     curl_easy_reset(curl);
@@ -184,9 +187,9 @@ bool ExchangeObj::GetCandles(const string& symbol, TimeFrame tf, timestamp_t sta
 bool ExchangeObj::GetAccount(AccountInfo &info)
 {
     bool ret = false;
-    Log("<ExchangeObj::GetAccount>");
+    InfoMessage("<ExchangeObj::GetAccount>");
     if (ApiKey_.size() == 0 || SecretKey_.size() == 0) {
-        Log("<ExchangeObj::GetAccount> API Key and Secret Key has not been set.");
+        WarningMessage("<ExchangeObj::GetAccount> API Key and Secret Key has not been set.");
         return false;
     }
 
@@ -197,7 +200,7 @@ bool ExchangeObj::GetAccount(AccountInfo &info)
     header_chunk.append(ApiKey_);
     extra_http_header.push_back(header_chunk);
 
-    Log("<ExchangeObj::GetAccount> url = |%s|" , url.c_str());
+    InfoMessage((F("<ExchangeObj::GetAccount> url = |%s|") % url.c_str()).str());
     string post_data = "";
 
     string str_result;
@@ -208,10 +211,10 @@ bool ExchangeObj::GetAccount(AccountInfo &info)
             JSON_PARSE
             ret = ParseAccount(value, info);
         } catch (std::exception &e) {
-            Log("<ExchangeObj::GetAccount> Error ! %s", e.what());
+            ErrorMessage((F("<ExchangeObj::GetAccount> Error ! %s") % e.what()).str());
         }
     } else {
-        Log("<ExchangeObj::GetAccount> Failed to get anything.");
+        ErrorMessage("<ExchangeObj::GetAccount> Failed to get anything.");
     }
 
     curl_easy_reset(curl);
@@ -262,17 +265,32 @@ void ExchangeObj::GetUrlWithHeader(string &url, string &str_result, vector<strin
         res = curl_easy_perform(curl);
 
         if (res != CURLE_OK) {
-            Log("<ExchangeObj::curl_api> curl_easy_perform() failed: %s" , curl_easy_strerror(res)) ;
+            ErrorMessage((F("<ExchangeObj::curl_api> curl_easy_perform() failed: %s") % curl_easy_strerror(res)).str());
         }
     }
 }
 
-void ExchangeObj::Log(const char* msg, ...)
+void ExchangeObj::ErrorMessage(const std::string &msg)
+{
+    Log(BaseLogger::Level::Critical, msg);
+}
+
+void ExchangeObj::InfoMessage(const std::string &msg)
+{
+    Log(BaseLogger::Level::Info, msg);
+}
+
+void ExchangeObj::WarningMessage(const std::string &msg)
+{
+    Log(BaseLogger::Level::Warning, msg);
+}
+
+void ExchangeObj::Log(BaseLogger::Level lv, const std::string &msg)
 {
     if (Logger_ == nullptr)
         return;
 
-    Logger_->Log(msg);
+    Logger_->Log(lv, msg);
 }
 
 string ExchangeObj::Timeframe2String(TimeFrame tf)
@@ -301,13 +319,13 @@ bool ExchangeObj::IsError(const boost::json::value& result)
         return false;
 
     if (result.is_null()) {
-        Log("<Error> Json Object is null !!!!");
+        ErrorMessage("<Error> Json Object is null !!!!");
         return true;
     }
 
     try {
         int code = result.at("code").to_number<int>();
-        Log("<Error> Code ", code);
+        ErrorMessage((F("<Error> Code: ") % code).str());
         return true;
     } catch (...) {
         return false;

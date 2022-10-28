@@ -6,6 +6,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/beast/ssl.hpp>
+#include <boost/format.hpp>
 #include <boost/signals2.hpp>
 #include <boost/json.hpp>
 #include <libcryptomarket.h>
@@ -15,6 +16,8 @@ namespace http = beast::http;
 namespace websocket = beast::websocket;
 namespace net = boost::asio;
 using tcp = boost::asio::ip::tcp;
+
+#define F(S) boost::format(S)
 
 BaseWebSocket::BaseWebSocket(const std::string& symbol, int subscribe_flags)
 {
@@ -51,6 +54,15 @@ void BaseWebSocket::SetHost(const std::string& exchange_host)
 void BaseWebSocket::Stop()
 {
     IsStart_ = false;
+    if (Thread_Ptr != nullptr) {
+        Thread_Ptr->join();
+        Thread_Ptr = nullptr;
+    }
+}
+
+void BaseWebSocket::SetLogger(BaseLogger* logger)
+{
+    Logger = logger;
 }
 
 void BaseWebSocket::SetPath(const std::string& path)
@@ -95,9 +107,9 @@ bool BaseWebSocket::StartLoop()
             }
             buffer.clear();
         }
-        //std::cout << "Everything finished fine" << std::endl;
+        InfoMessage("<BaseWebSocket::StartLoop> Thread Loop end");
     } catch (std::exception const& e) {
-        //std::cerr << "Error: " << e.what() << std::endl;
+        ErrorMessage((F("<BaseWebSocket::StartLoop> Error: %s") % e.what()).str());
         return false;
     }
 
@@ -114,7 +126,7 @@ void BaseWebSocket::ParseBuffer(beast::flat_buffer buffer)
         auto val = parser.release();
         ParseJSon(val);
     } catch (std::exception& e) {
-
+        ErrorMessage((F("Error: %s") % e.what()).str());
     }
 }
 
@@ -128,4 +140,28 @@ TimeFrame BaseWebSocket::GetTimeFrame(const std::string& tf)
     if (tf == "1d") return TimeFrame_1d;
 
     return TimeFrame_1m;
+}
+
+void BaseWebSocket::ErrorMessage(const std::string &message)
+{
+    if (Logger == nullptr)
+        return;
+
+    Logger->Log(BaseLogger::Level::Critical, (F("<Exchange: %s> <%s> %s") % Exchange_ % Symbol_ % message).str());
+}
+
+void BaseWebSocket::WarningMessage(const std::string &message)
+{
+    if (Logger == nullptr)
+        return;
+
+    Logger->Log(BaseLogger::Level::Warning, (F("<Exchange: %s> <%s> %s") % Exchange_ % Symbol_ % message).str());
+}
+
+void BaseWebSocket::InfoMessage(const std::string &message)
+{
+    if (Logger == nullptr)
+        return;
+
+    Logger->Log(BaseLogger::Level::Info, (F("<Exchange: %s> <%s> %s") % Exchange_ % Symbol_ % message).str());
 }

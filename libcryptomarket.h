@@ -10,6 +10,25 @@ namespace libcryptomarket {
 
 typedef unsigned long long timestamp_t;
 
+class BaseLogger
+{
+public:
+    enum Level {
+        Critical = -2,
+        Warning = -1,
+        Info = 0
+    };
+
+    BaseLogger() { }
+    virtual void Log(Level lv, const string& message) = 0;
+};
+
+class ConsoleLogger : public BaseLogger
+{
+public:
+    void Log(Level lv, const std::string &msg);
+};
+
 class Symbol
 {
 public:
@@ -117,6 +136,7 @@ struct CryptoMarketHandle {
 CryptoMarketHandle NewExchangeObj(const string& name, const std::string &api = "", const std::string &secret = "");
 timestamp_t GetServerTime(CryptoMarketHandle& h);
 
+bool SetExchangeObjLogger(CryptoMarketHandle handle, BaseLogger* logger);
 bool GetExchangeInfo(CryptoMarketHandle &h, ExchangeInfo& info);
 bool GetAllPrices(CryptoMarketHandle &h, Prices& prices);
 bool GetMarketDepth(CryptoMarketHandle &h, const string &symbol, int limit, MarketDepth& Asks, MarketDepth& Bids, uint64_t& lastUpdateId);
@@ -137,6 +157,9 @@ static const int CANDLES_SUBSCRIBE_15m = 0x10;
 static const int CANDLES_SUBSCRIBE_1h = 0x20;
 static const int CANDLES_SUBSCRIBE_4h = 0x40;
 static const int CANDLES_SUBSCRIBE_1d = 0x80;
+static const int ALL_SUBSCRIBE = MARKET_DEPTH_SUBSCRIBE|TRADES_SUBSCRIBE|
+        CANDLES_SUBSCRIBE_1m|CANDLES_SUBSCRIBE_5m|CANDLES_SUBSCRIBE_15m|
+        CANDLES_SUBSCRIBE_1h|CANDLES_SUBSCRIBE_4h|CANDLES_SUBSCRIBE_1d;
 
 typedef void* WebSocketObj;
 typedef void (*UpdateMarketDepthEvent)(void*, const std::string&, const std::string&, MarketDepthSeries& series);
@@ -144,7 +167,8 @@ typedef void (*AddTradeEvent)(void*, const std::string&, const std::string&, Tra
 typedef void (*UpdateCandleEvent)(void*, const std::string&, const std::string&, TimeFrame tf, Candle& candle);
 
 
-WebSocketObj CreateWebSocketObj(const std::string& exchange, const std::string& symbol, int subscribe_flags);
+WebSocketObj CreateWebSocketObj(const std::string& exchange, const std::string& symbol, int subscribe_flags = ALL_SUBSCRIBE);
+bool SetWebSocketLogger(WebSocketObj ws, BaseLogger* logger);
 bool SetWebSocketContext(WebSocketObj ws, void *context);
 void StartWebSocket(WebSocketObj ws);
 void StopWebSocket(WebSocketObj ws);

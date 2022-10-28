@@ -40,6 +40,22 @@ timestamp_t GetServerTime(CryptoMarketHandle& h)
     return static_cast<ExchangeObj*>(h.ExchangeObj)->GetServerTime();
 }
 
+bool SetExchangeObjLogger(CryptoMarketHandle handle, BaseLogger* logger)
+{
+    CryptoMarketHandle newHandle;
+    if (handle.ExchangeName == "binance") {
+        static_cast<BinanceExchange*>(handle.ExchangeObj)->SetLogger(logger);
+        return true;
+    }
+
+    if (handle.ExchangeName == "binance-futures") {
+        static_cast<BinanceFuturesExchange*>(handle.ExchangeObj)->SetLogger(logger);
+        return true;
+    }
+
+    return false;
+}
+
 bool GetExchangeInfo(CryptoMarketHandle& h, ExchangeInfo& info)
 {
     return static_cast<ExchangeObj*>(h.ExchangeObj)->GetExchangeInfo(info);
@@ -97,6 +113,13 @@ WebSocketObj CreateWebSocketObj(const std::string& exchange, const std::string& 
         return new ByBitWebsocket(symbol, subscribe_flags);
 
     return nullptr;
+}
+
+bool SetWebSocketLogger(WebSocketObj ws, BaseLogger* logger)
+{
+    if (ws == nullptr) return false;
+    static_cast<BaseWebSocket *>(ws)->SetLogger(logger);
+    return true;
 }
 
 bool SetWebSocketContext(WebSocketObj ws, void *context)

@@ -38,7 +38,7 @@ string BinanceExchange::b2a_hex(char *byte_arr, int n)
 
 timestamp_t BinanceExchange::ParseServerTime(const json::value &json)
 {
-    return json.at("serverTime").as_uint64();
+    return json.at("serverTime").to_number<timestamp_t>();
 }
 
 string BinanceExchange::BuildTimeUrl()

@@ -35,6 +35,7 @@ public:
     void SetHost(const std::string& exchange_host);
     void StartThread();
     void Stop();
+    void SetLogger(BaseLogger* logger);
 
     void SetMarketDepthEvent(libcryptomarket::UpdateMarketDepthEvent event)  { UpdateMarketDepthCallback_ = event;   }
     void SetAddTradeEvent(libcryptomarket::AddTradeEvent event)              { AddTradeCallback_ = event;            }
@@ -61,6 +62,11 @@ protected:
 
     void ParseBuffer(beast::flat_buffer buffer);
     bool IsStart_;
+    BaseLogger *Logger;
+
+    void ErrorMessage(const string& message);
+    void InfoMessage(const string& message);
+    void WarningMessage(const string& message);
 
 private:
     std::thread *Thread_Ptr;;

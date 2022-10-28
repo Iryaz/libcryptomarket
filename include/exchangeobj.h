@@ -10,7 +10,6 @@
 #include <map>
 
 #include "libcryptomarket.h"
-#include "loggerobj.h"
 
 using std::list;
 using std::string;
@@ -18,12 +17,6 @@ using std::map;
 using std::vector;
 using namespace libcryptomarket;
 namespace json = boost::json;
-
-class LogObject
-{
-public:
-    LogObject() {}
-};
 
 class ExchangeObj
 {
@@ -42,7 +35,7 @@ public:
     bool GetCandles(const string& symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit, CandlesList& candles);
     bool GetAccount(AccountInfo& info);
 
-    void SetLogger(LoggerObj* logger) { Logger_ = logger; }
+    void SetLogger(BaseLogger* logger) { Logger_ = logger; }
 
 protected:
     string ApiKey_;
@@ -50,7 +43,7 @@ protected:
     CURL* curl;
     int RecvWindow_;
 
-    LoggerObj* Logger_;
+    BaseLogger* Logger_;
     void GetUrl(string &url, string &result_json);
     void GetUrlWithHeader(string &url, string &str_result, vector<string> &extra_http_header, string &post_data, string &action);
 
@@ -73,7 +66,10 @@ protected:
     virtual string Timeframe2String(TimeFrame tf);
     virtual bool IsError(const json::value &result);
 
-    void Log(const char* msg, ...);
+    void Log(BaseLogger::Level lv, const string& msg);
+    void ErrorMessage(const std::string &msg);
+    void InfoMessage(const std::string &msg);
+    void WarningMessage(const std::string &msg);
 
     typedef size_t (*Callback)(char *content, size_t size, size_t nmemb, string *buffer);
     Callback CUrlCallback_;
