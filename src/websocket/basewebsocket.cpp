@@ -26,6 +26,7 @@ BaseWebSocket::BaseWebSocket(const std::string& symbol, int subscribe_flags)
     Thread_Ptr = nullptr;
     SetSymbol(symbol);
     Context_ = nullptr;
+    Logger = nullptr;
 
     UpdateMarketDepthCallback_ = nullptr;
     AddTradeCallback_ = nullptr;

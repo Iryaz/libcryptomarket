@@ -1,11 +1,11 @@
 
-TARGET = binance
+TARGET = bybit-test
 TEMPLATE = app
 
 CONFIG += c++11
 
 SOURCES += \
-    main.cpp
+    bybit-test.cpp
 
 INCLUDEPATH += ../../
 
