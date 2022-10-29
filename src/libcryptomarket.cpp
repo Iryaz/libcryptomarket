@@ -107,7 +107,10 @@ void Cleanup()
 WebSocketObj CreateWebSocketObj(const std::string& exchange, const std::string& symbol, int subscribe_flags)
 {
     if (exchange == "binance")
-        return new BinanceWebSocket(symbol, subscribe_flags);
+        return new BinanceWebSocket(BinanceWebSocket::Spot, symbol, subscribe_flags);
+
+    if (exchange == "binance-futures")
+        return new BinanceWebSocket(BinanceWebSocket::Futures, symbol, subscribe_flags);
 
     if (exchange == "bybit")
         return new ByBitWebsocket(symbol, subscribe_flags);

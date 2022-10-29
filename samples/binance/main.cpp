@@ -19,14 +19,14 @@ int main()
 {
     ConsoleLogger Logger;
     ExchangeInfo info;
-    CryptoMarketHandle Exchange = NewExchangeObj("binance");
+    CryptoMarketHandle Exchange = NewExchangeObj("binance-futures");
     SetExchangeObjLogger(Exchange, &Logger);
     std::cout << "Server time: " << GetServerTime(Exchange) << "\n";
     GetExchangeInfo(Exchange, info);
     std::cout << "Exchange symbol count: " << info.Symbols.size() << "\n";
 
     WebSocketObj Handle;
-    Handle = CreateWebSocketObj("binance", "BTCUSDT", TRADES_SUBSCRIBE|CANDLES_SUBSCRIBE_1m|CANDLES_SUBSCRIBE_5m);
+    Handle = CreateWebSocketObj("binance-futures", "BTCUSDT", TRADES_SUBSCRIBE|CANDLES_SUBSCRIBE_1m|CANDLES_SUBSCRIBE_5m);
     SetWebSocketLogger(Handle, &Logger);
     SetWebSocketAddTradeCallback(Handle, AddTrade);
     SetWebSocketUpdateCandleCallback(Handle, UpdateCandle);

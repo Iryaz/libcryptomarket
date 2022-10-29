@@ -6,7 +6,12 @@
 class BinanceWebSocket : public BaseWebSocket
 {
 public:
-    BinanceWebSocket(const std::string& symbol, int subscribe_flags);
+    enum Type {
+        Spot,
+        Futures
+    };
+
+    BinanceWebSocket(Type type, const std::string& symbol, int subscribe_flags);
 
 protected:
     void SetSymbol(const std::string& symbol);
@@ -17,8 +22,11 @@ protected:
 
 private:
     virtual void ParseJSon(boost::json::value& result);
+    void ParseDataSpot(boost::json::value& result);
+    void ParseDataFutures(boost::json::value& result);
     DataEventType String2EventType(const std::string& s);
     std::string PathParams_;
+    Type Type_;
 };
 
 #endif // BINANCEWEBSOCKET_H

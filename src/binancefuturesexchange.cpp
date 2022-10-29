@@ -48,3 +48,29 @@ string BinanceFuturesExchange::BuildAccountUrl(timestamp_t timestamp)
 
     return url;
 }
+
+bool BinanceFuturesExchange::ParseExchangeInfo(const json::value &json, ExchangeInfo &info)
+{
+    info.Symbols.clear();
+    for (auto i : json.at("symbols").as_array()) {
+        if (i.at("status") == "TRADING") {
+            Symbol s(true);
+            s.Base.AssetPrecision = i.at("baseAssetPrecision").to_number<int>();
+            //s.Base.ComissionPrecision = i.at("baseCommissionPrecision").to_number<int>();
+            s.Base.Name = i.at("baseAsset").as_string().c_str();
+
+            //s.Quote.AssetPrecision = i.at("quoteAssetPrecision").to_number<int>();
+            //s.Quote.ComissionPrecision = i.at("quoteCommissionPrecision").to_number<int>();
+            s.Quote.Name = i.at("quoteAsset").as_string().c_str();
+
+            if (i.at("filters").is_array()) {
+                s.SetPriceStep(std::stod(i.at("filters").at(0).at("tickSize").as_string().c_str()));
+                s.SetQtyStep(std::stod(i.at("filters").at(2).at("stepSize").as_string().c_str()));
+            }
+
+            info.Symbols.push_back(s);
+        }
+    }
+
+    return true;
+}

@@ -15,6 +15,7 @@ public:
 private:
     bool ParseAccount(const json::value& json, AccountInfo &info);
     string BuildAccountUrl(timestamp_t timestamp);
+    bool ParseExchangeInfo(const json::value &json, ExchangeInfo &info);
 
     const string API_PATH = "/fapi";
     const string BINANCE_FUTURES_SERVER = "https://fapi.binance.com";

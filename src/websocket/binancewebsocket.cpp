@@ -1,38 +1,54 @@
-﻿#include "websocket/binancewebsocket.h"
+﻿#include <iostream>
+#include "websocket/binancewebsocket.h"
 #include <boost/format.hpp>
 
 #define F(S) boost::format(S)
 
-BinanceWebSocket::BinanceWebSocket(const std::string& symbol, int subscribe_flags) :
+BinanceWebSocket::BinanceWebSocket(Type type, const std::string& symbol, int subscribe_flags) :
     BaseWebSocket(symbol, subscribe_flags)
 {
+    Type_ = type;
     SetSymbol(symbol);
-    SetPort(9443);
-    SetHost("stream.binance.com");
-    Exchange_ = "binance";
-    SetPath("/ws");
+    switch (type) {
+    case Spot: {
+        SetPort(9443);
+        SetHost("stream.binance.com");
+        Exchange_ = "binance";
+        SetPath("/ws/");
+    } break;
+    case Futures: {
+        SetPort(443);
+        SetHost("fstream.binance.com");
+        Exchange_ = "binance-futures";
+        SetPath("/stream?streams=");
+    } break;
+    default:
+        break;
+    }
+
     Init(GetSubscribeFlags());
 }
 
 void BinanceWebSocket::Init(int flag)
 {
     if (flag & MARKET_DEPTH_SUBSCRIBE)
-        PathParams_ += "/" + GetSymbol() + "@depth@100ms";
+        PathParams_ += GetSymbol() + "@depth@100ms" + "/";
     if (flag & TRADES_SUBSCRIBE)
-        PathParams_ += "/" + GetSymbol() + "@aggTrade";
+        PathParams_ += GetSymbol() + "@aggTrade" + "/";
     if (flag & CANDLES_SUBSCRIBE_1m)
-        PathParams_ += "/" + GetSymbol() + "@kline_1m";
+        PathParams_ += GetSymbol() + "@kline_1m" + "/";
     if (flag & CANDLES_SUBSCRIBE_5m)
-        PathParams_ += "/" + GetSymbol() + "@kline_5m";
+        PathParams_ += GetSymbol() + "@kline_5m" + "/";
     if (flag & CANDLES_SUBSCRIBE_15m)
-        PathParams_ += "/" + GetSymbol() + "@kline_15m";
+        PathParams_ += GetSymbol() + "@kline_15m" + "/";
     if (flag & CANDLES_SUBSCRIBE_1h)
-        PathParams_ += "/" + GetSymbol() + "@kline_1h";
+        PathParams_ += GetSymbol() + "@kline_1h" + "/";
     if (flag & CANDLES_SUBSCRIBE_4h)
-        PathParams_ += "/" + GetSymbol() + "@kline_4h";
+        PathParams_ += GetSymbol() + "@kline_4h" + "/";
     if (flag & CANDLES_SUBSCRIBE_1d)
-        PathParams_ += "/" + GetSymbol() + "@kline_1d";
+        PathParams_ += GetSymbol() + "@kline_1d" + "/";
 
+    PathParams_.pop_back();
     SetPath(Path_ + PathParams_);
 }
 
@@ -44,19 +60,58 @@ void BinanceWebSocket::SetSymbol(const std::string& symbol)
 
 void BinanceWebSocket::ParseJSon(boost::json::value& result)
 {
-    DataEventType event = String2EventType(result.at("e").as_string().c_str());
-    switch (event) {
-    case UNKNOWN:
+    switch (Type_) {
+    case Spot:
+        ParseDataSpot(result);
         break;
-    case DEPTH_UPDATE:
-        ParseMarketDepth(result);
+    case Futures:
+        ParseDataFutures(result);
         break;
-    case AGG_TRADE:
-        ParseTrades(result);
-        break;
-    case KLINE:
-        ParseKLines(result);
-        break;
+    }
+}
+
+void BinanceWebSocket::ParseDataSpot(boost::json::value& result)
+{
+    try {
+        DataEventType event = String2EventType(result.at("e").as_string().c_str());
+        switch (event) {
+        case UNKNOWN:
+            break;
+        case DEPTH_UPDATE:
+            ParseMarketDepth(result);
+            break;
+        case AGG_TRADE:
+            ParseTrades(result);
+            break;
+        case KLINE:
+            ParseKLines(result);
+            break;
+        }
+    } catch (std::exception& e) {
+        ErrorMessage((F("<BinanceWebSocket::ParseDataSpot> Error parsing json: %s") % e.what()).str());
+    }
+}
+
+void BinanceWebSocket::ParseDataFutures(boost::json::value& result)
+{
+    try {
+        auto obj = result.at("data").as_object();
+        DataEventType event = String2EventType(obj.at("e").as_string().c_str());
+        switch (event) {
+        case UNKNOWN:
+            break;
+        case DEPTH_UPDATE:
+            ParseMarketDepth(obj);
+            break;
+        case AGG_TRADE:
+            ParseTrades(obj);
+            break;
+        case KLINE:
+            ParseKLines(obj);
+            break;
+        }
+    } catch (std::exception& e) {
+        ErrorMessage((F("<BinanceWebSocket::ParseDataFutures> Error parsing json: %s") % e.what()).str());
     }
 }
 
