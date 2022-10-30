@@ -19,7 +19,7 @@ using tcp = boost::asio::ip::tcp;
 
 #define F(S) boost::format(S)
 
-BaseWebSocket::BaseWebSocket(const std::string& symbol, int subscribe_flags)
+BaseWebSocket::BaseWebSocket(Type type, const std::string& symbol, int subscribe_flags)
 {
     SubscribeFlags = subscribe_flags;
     IsStart_ = true;
@@ -27,6 +27,7 @@ BaseWebSocket::BaseWebSocket(const std::string& symbol, int subscribe_flags)
     SetSymbol(symbol);
     Context_ = nullptr;
     Logger = nullptr;
+    Type_ = type;
 
     UpdateMarketDepthCallback_ = nullptr;
     AddTradeCallback_ = nullptr;

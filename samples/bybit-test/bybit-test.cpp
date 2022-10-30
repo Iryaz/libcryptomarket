@@ -15,12 +15,20 @@ static void UpdateCandle(void*, const std::string&, const std::string& symbol, T
     std::cout << "Candle " << "Symbol: " << symbol << " C: " << candle.Close << " O: " << candle.Open << "\n";
 }
 
+static void UpdateMarketDepth(void*, const std::string&, const std::string& symbol, MarketDepthSeries& series)
+{
+    std::cout << "Market Depth" << " Symbol: " << symbol << " Series count: " << series.Items.size() << "\n";
+}
+
 int main()
 {
+    ConsoleLogger Logger;
     WebSocketObj Handle;
-    Handle = CreateWebSocketObj("bybit", "BTCUSDT", TRADES_SUBSCRIBE);
+    Handle = CreateWebSocketObj("bybit", "BTCUSDT", ALL_SUBSCRIBE);
+    SetWebSocketLogger(Handle, &Logger);
     SetWebSocketAddTradeCallback(Handle, AddTrade);
     SetWebSocketUpdateCandleCallback(Handle, UpdateCandle);
+    SetWebSocketUpdateMarketDepthCallback(Handle, UpdateMarketDepth);
     StartWebSocket(Handle);
     std::this_thread::sleep_for(std::chrono::seconds(10));
 

@@ -17,5 +17,6 @@ release/
 .qtc_clangd/
 release/*
 debug/*
-binance.exe
+binance-test.exe
+bybit-test.exe
 /samples/samples.pro.user

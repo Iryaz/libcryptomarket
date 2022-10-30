@@ -19,14 +19,28 @@ namespace websocket = beast::websocket;
 namespace net = boost::asio;
 using tcp = boost::asio::ip::tcp;
 
-ByBitWebsocket::ByBitWebsocket(const std::string &symbol, int subscribe_flags) :
-    BaseWebSocket(symbol, subscribe_flags)
+ByBitWebsocket::ByBitWebsocket(Type type, const std::string &symbol, int subscribe_flags) :
+    BaseWebSocket(type, symbol, subscribe_flags)
 {
     SetSymbol(symbol);
-    SetHost("stream.bytick.com");
-    SetPath("/realtime_public");
-    SetPort(443);
-    Exchange_ = "bybit";
+
+    switch (Type_) {
+    case Spot: {
+        SetHost("stream.bybit.com");
+        SetPath("/spot/ws");
+        SetPort(443);
+        Exchange_ = "bybit";
+    } break;
+    case Futures: {
+        SetHost("stream.bytick.com");
+        SetPath("/realtime_public");
+        SetPort(443);
+        Exchange_ = "bybit-futures";
+    } break;
+    default:
+        break;
+    }
+
     Init(GetSubscribeFlags());
 }
 
@@ -56,37 +70,37 @@ void ByBitWebsocket::Init(int flag)
 
     if (flag & CANDLES_SUBSCRIBE_1m) {
         boost::property_tree::ptree arg;
-        arg.put("", "candle." + Symbol_ + ".1m");
+        arg.put("", "candle.1." + Symbol_);
         args.push_back(std::make_pair("", arg));
     }
 
     if (flag & CANDLES_SUBSCRIBE_5m) {
         boost::property_tree::ptree arg;
-        arg.put("", "candle." + Symbol_ + ".5m");
+        arg.put("", "candle.5." + Symbol_);
         args.push_back(std::make_pair("", arg));
     }
 
     if (flag & CANDLES_SUBSCRIBE_15m) {
         boost::property_tree::ptree arg;
-        arg.put("", "candle." + Symbol_ + ".15m");
+        arg.put("", "candle.15." + Symbol_);
         args.push_back(std::make_pair("", arg));
     }
 
     if (flag & CANDLES_SUBSCRIBE_1h) {
         boost::property_tree::ptree arg;
-        arg.put("", "candle." + Symbol_ + ".1h");
+        arg.put("", "candle.60." + Symbol_);
         args.push_back(std::make_pair("", arg));
     }
 
     if (flag & CANDLES_SUBSCRIBE_4h) {
         boost::property_tree::ptree arg;
-        arg.put("", "candle." + Symbol_ + ".4h");
+        arg.put("", "candle.240." + Symbol_);
         args.push_back(std::make_pair("", arg));
     }
 
     if (flag & CANDLES_SUBSCRIBE_1d) {
         boost::property_tree::ptree arg;
-        arg.put("", "candle." + Symbol_ + ".1d");
+        arg.put("", "candle.720." + Symbol_);
         args.push_back(std::make_pair("", arg));
     }
 
@@ -99,6 +113,9 @@ void ByBitWebsocket::Init(int flag)
 void ByBitWebsocket::ParseJSon(boost::json::value& result)
 {
     boost::json::value data;
+    if (IsResponseMessage(result) == true)
+        return;
+
     DataEventType event = String2EventType(result.at("topic").as_string().c_str());
     switch (event) {
     case UNKNOWN:
@@ -200,7 +217,41 @@ void ByBitWebsocket::ParseTrades(const json::value& json)
 
 void ByBitWebsocket::ParseKLines(const json::value& json)
 {
+    try {
+        auto data = json.at("data").as_array();
+        for (auto itr : data) {
+            auto obj = itr.as_object();
+            Candle c;
+            c.OpenTime = obj.at("start").to_number<timestamp_t>();
+            c.CloseTime = obj.at("end").to_number<timestamp_t>();
+            c.Qty = std::atof(obj.at("volume").as_string().c_str());
+            c.Open = obj.at("open").to_number<double>();
+            c.Close = obj.at("close").to_number<double>();
+            c.High = obj.at("high").to_number<double>();
+            c.Low = obj.at("low").to_number<double>();
 
+            int period = std::atoi(obj.at("period").as_string().c_str());
+            TimeFrame tf = GetTimeFrameFromPeriod(period);
+            if (UpdateCandleCallback_ != nullptr)
+                UpdateCandleCallback_(Context_, Exchange_, Symbol_, tf, c);
+
+        }
+    } catch (std::exception& e) {
+        ErrorMessage("<ByBitWebsocket::ParseKLines> Error parse KLines");
+    }
+}
+
+bool ByBitWebsocket::IsResponseMessage(const json::value& result)
+{
+    try {
+        bool is_success = result.at("success").as_bool();
+        if (is_success == false)
+            WarningMessage("<ByBitWebsocket::IsResponseMessage> Response Message not success !!!");
+
+        return true;
+    } catch (std::exception& e) {
+        return false;
+    }
 }
 
 BaseWebSocket::DataEventType ByBitWebsocket::String2EventType(const std::string& s)
@@ -230,4 +281,27 @@ BaseWebSocket::DataEventType ByBitWebsocket::String2EventType(const std::string&
         return BaseWebSocket::DataEventType::KLINE;
 
     return BaseWebSocket::DataEventType::UNKNOWN;
+}
+
+TimeFrame ByBitWebsocket::GetTimeFrameFromPeriod(int period)
+{
+    if (period == 1)
+        return TimeFrame::TimeFrame_1m;
+
+    if (period == 5)
+        return TimeFrame::TimeFrame_5m;
+
+    if (period == 15)
+        return TimeFrame::TimeFrame_15m;
+
+    if (period == 60)
+        return TimeFrame::TimeFrame_1h;
+
+    if (period == 240)
+        return TimeFrame::TimeFrame_4h;
+
+    if (period == 720)
+        return TimeFrame::TimeFrame_1d;
+
+    return TimeFrame::TimeFrame_1m;
 }

@@ -14,14 +14,12 @@ using namespace libcryptomarket;
 class BaseWebSocket
 {
 public:
-    typedef enum {
-        UNKNOWN = 0,
-        DEPTH_UPDATE = 1,
-        AGG_TRADE = 2,
-        KLINE = 3
-    } DataEventType;
+    enum Type {
+        Spot,
+        Futures
+    };
 
-    BaseWebSocket(const std::string& symbol, int subscribe_flags);
+    BaseWebSocket(Type type, const std::string& symbol, int subscribe_flags);
     virtual ~BaseWebSocket();
 
     int GetSubscribeFlags()                             { return SubscribeFlags;    }
@@ -42,6 +40,13 @@ public:
     void SetUpdateCandleEvent(libcryptomarket::UpdateCandleEvent event)      { UpdateCandleCallback_ = event;        }
 
 protected:
+    typedef enum {
+        UNKNOWN = 0,
+        DEPTH_UPDATE = 1,
+        AGG_TRADE = 2,
+        KLINE = 3
+    } DataEventType;
+
     void* Context_;
     std::string Exchange_;
     std::string ClientName_;
@@ -50,6 +55,7 @@ protected:
     std::string Path_;
     std::string Symbol_;
     std::string Message_;
+    Type Type_;
 
     virtual bool StartLoop();
     virtual void ParseJSon(boost::json::value& val) = 0;

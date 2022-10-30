@@ -12,7 +12,6 @@ INCLUDEPATH += ./lib/
 INCLUDEPATH += C:\boost_1_80_0\
 
 SOURCES += \
-    samples/binance/main.cpp \
     src/libcryptomarket.cpp \
     src/binanceexchange.cpp \
     src/binancefuturesexchange.cpp \

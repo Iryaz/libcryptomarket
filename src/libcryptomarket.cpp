@@ -107,13 +107,16 @@ void Cleanup()
 WebSocketObj CreateWebSocketObj(const std::string& exchange, const std::string& symbol, int subscribe_flags)
 {
     if (exchange == "binance")
-        return new BinanceWebSocket(BinanceWebSocket::Spot, symbol, subscribe_flags);
+        return new BinanceWebSocket(BaseWebSocket::Spot, symbol, subscribe_flags);
 
     if (exchange == "binance-futures")
-        return new BinanceWebSocket(BinanceWebSocket::Futures, symbol, subscribe_flags);
+        return new BinanceWebSocket(BaseWebSocket::Futures, symbol, subscribe_flags);
 
     if (exchange == "bybit")
-        return new ByBitWebsocket(symbol, subscribe_flags);
+        return new ByBitWebsocket(BaseWebSocket::Spot, symbol, subscribe_flags);
+
+    if (exchange == "bybit-futures")
+        return new ByBitWebsocket(BaseWebSocket::Futures, symbol, subscribe_flags);
 
     return nullptr;
 }
@@ -171,12 +174,13 @@ bool DeleteWebSocket(WebSocketObj ws)
     if (ws == nullptr)
         return false;
 
-    if (static_cast<BaseWebSocket *>(ws)->GetExchange() == "binance") {
+    auto name =  static_cast<BaseWebSocket *>(ws)->GetExchange();
+    if (name == "binance" || name == "binance-futures") {
         static_cast<BinanceWebSocket *>(ws)->Stop();
         delete static_cast<BinanceWebSocket *>(ws);
     }
 
-    if (static_cast<BaseWebSocket *>(ws)->GetExchange() == "bybit") {
+    if (name == "bybit" || name == "bybit-futures") {
         static_cast<ByBitWebsocket *>(ws)->Stop();
         delete static_cast<ByBitWebsocket *>(ws);
     }

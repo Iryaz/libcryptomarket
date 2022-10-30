@@ -5,11 +5,10 @@
 #define F(S) boost::format(S)
 
 BinanceWebSocket::BinanceWebSocket(Type type, const std::string& symbol, int subscribe_flags) :
-    BaseWebSocket(symbol, subscribe_flags)
+    BaseWebSocket(type, symbol, subscribe_flags)
 {
-    Type_ = type;
     SetSymbol(symbol);
-    switch (type) {
+    switch (Type_) {
     case Spot: {
         SetPort(9443);
         SetHost("stream.binance.com");

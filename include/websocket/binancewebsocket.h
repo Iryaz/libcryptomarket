@@ -6,11 +6,6 @@
 class BinanceWebSocket : public BaseWebSocket
 {
 public:
-    enum Type {
-        Spot,
-        Futures
-    };
-
     BinanceWebSocket(Type type, const std::string& symbol, int subscribe_flags);
 
 protected:
@@ -26,7 +21,6 @@ private:
     void ParseDataFutures(boost::json::value& result);
     DataEventType String2EventType(const std::string& s);
     std::string PathParams_;
-    Type Type_;
 };
 
 #endif // BINANCEWEBSOCKET_H

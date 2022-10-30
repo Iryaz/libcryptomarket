@@ -6,7 +6,7 @@
 class ByBitWebsocket : public BaseWebSocket
 {
 public:
-    ByBitWebsocket(const std::string& symbol, int subscribe_flags);
+    ByBitWebsocket(Type type, const std::string& symbol, int subscribe_flags);
 
 protected:
     void Init(int flag);
@@ -19,6 +19,8 @@ protected:
 private:
     void ParseJSon(boost::json::value& result);
     DataEventType String2EventType(const std::string& s);
+    bool IsResponseMessage(const json::value& result);
+    TimeFrame GetTimeFrameFromPeriod(int period);
 };
 
 #endif // ByBitWebsocket_H
