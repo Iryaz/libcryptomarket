@@ -16,9 +16,6 @@ protected:
     string ApiType_;
     string ApiServer_;
 
-    string hmac_sha256(const char *key, const char *data);
-    string b2a_hex(char *byte_arr, int n);
-
 private:
     virtual timestamp_t ParseServerTime(const json::value& json);
     virtual bool ParseSymbols(const json::value& json, std::list<Symbol> &symbols);

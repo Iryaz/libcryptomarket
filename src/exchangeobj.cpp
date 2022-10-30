@@ -3,6 +3,8 @@
 #include <boost/format.hpp>
 #include <vector>
 #include <iostream>
+#include <hmac.h>
+#include <sha.h>
 
 #define F(S) boost::format(S)
 
@@ -225,6 +227,26 @@ void ExchangeObj::Cleanup()
 {
     curl_easy_cleanup(curl);
     curl_global_cleanup();
+}
+
+string ExchangeObj::hmac_sha256(const char *key, const char *data)
+{
+    unsigned char* digest;
+    digest = HMAC(EVP_sha256(), key, strlen(key), (unsigned char*)data, strlen(data), nullptr, nullptr);
+    return b2a_hex((char *)digest, 32);
+}
+
+string ExchangeObj::b2a_hex(char *byte_arr, int n)
+{
+    const static std::string HexCodes = "0123456789abcdef";
+    string HexString;
+    for (int i = 0; i < n ; ++i) {
+        unsigned char BinValue = byte_arr[i];
+        HexString += HexCodes[( BinValue >> 4 ) & 0x0F];
+        HexString += HexCodes[BinValue & 0x0F];
+    }
+
+    return HexString;
 }
 
 void ExchangeObj::GetUrl(string &url, string &result_json)

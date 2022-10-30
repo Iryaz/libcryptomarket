@@ -43,6 +43,9 @@ protected:
     CURL* curl;
     int RecvWindow_;
 
+    string hmac_sha256(const char *key, const char *data);
+    string b2a_hex(char *byte_arr, int n);
+
     BaseLogger* Logger_;
     void GetUrl(string &url, string &result_json);
     void GetUrlWithHeader(string &url, string &str_result, vector<string> &extra_http_header, string &post_data, string &action);

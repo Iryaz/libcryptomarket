@@ -27,9 +27,26 @@ int main()
     std::list<Symbol> Symbols;
     //SetExchangeObjLogger(Exchange, &Logger);
     GetSymbols(Exchange, Symbols);
+    Prices prices;
+    GetAllPrices(Exchange, prices);
+    std::cout << "Prices count: " << prices.size() << "\n";
     std::cout << "ServerTime: " << GetServerTime(Exchange) << "\n";
     std::cout << "Symbols count: " << Symbols.size() << "\n";
-    WebSocketObj Handle;
+
+    MarketDepth asks;
+    MarketDepth bids;
+    uint64_t id;
+    GetMarketDepth(Exchange, "BTCUSDT", 100, asks, bids, id);
+    std::cout << "Asks count " << asks.size() << " Bids count " << bids.size() << "\n";
+
+    TradesList trades;
+    GetTrades(Exchange, "BTCUSDT", -1, -1, 100, trades);
+    std::cout << "Trades count " << trades.size() << "\n";
+
+    CandlesList candles;
+    GetCandles(Exchange, "BTCUSDT", TimeFrame_5m, 0, 0, 0, candles);
+    std::cout << "Candles count " << candles.size() << "\n";
+    /*WebSocketObj Handle;
     Handle = CreateWebSocketObj("bybit", "BTCUSDT", ALL_SUBSCRIBE);
     SetWebSocketLogger(Handle, &Logger);
     SetWebSocketAddTradeCallback(Handle, AddTrade);
@@ -39,6 +56,6 @@ int main()
     std::this_thread::sleep_for(std::chrono::seconds(10));
 
     StopWebSocket(Handle);
-    DeleteWebSocket(Handle);
+    DeleteWebSocket(Handle);*/
     return 0;
 }
