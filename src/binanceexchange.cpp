@@ -46,7 +46,7 @@ string BinanceExchange::BuildTimeUrl()
     return ApiServer_ + ApiType_ + "/v1/time";
 }
 
-string BinanceExchange::BuildExchangeInfoUrl()
+string BinanceExchange::BuildSymbolsUrl()
 {
     return ApiServer_ + ApiType_ + "/v1/exchangeInfo";
 }
@@ -142,9 +142,9 @@ string BinanceExchange::BuildAccountUrl(timestamp_t timestamp)
     return url;
 }
 
-bool BinanceExchange::ParseExchangeInfo(const json::value &json, ExchangeInfo &info)
+bool BinanceExchange::ParseSymbols(const json::value &json, std::list<Symbol> &symbols)
 {
-    info.Symbols.clear();
+    symbols.clear();
     for (auto i : json.at("symbols").as_array()) {
         if (i.at("status") == "TRADING") {
             Symbol s(true);
@@ -161,7 +161,7 @@ bool BinanceExchange::ParseExchangeInfo(const json::value &json, ExchangeInfo &i
                 s.SetQtyStep(std::stod(i.at("filters").at(2).at("stepSize").as_string().c_str()));
             }
 
-            info.Symbols.push_back(s);
+            symbols.push_back(s);
         }
     }
 

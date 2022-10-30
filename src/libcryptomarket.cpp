@@ -1,4 +1,5 @@
 ﻿#include "binancefuturesexchange.h"
+#include "bybitexchange.h"
 #include "exchangeobj.h"
 #include "websocket/binancewebsocket.h"
 #include "websocket/bybitwebsocket.h"
@@ -31,6 +32,15 @@ CryptoMarketHandle NewExchangeObj(const string& name, const string& api, const s
         return newHandle;
     }
 
+    if (name == "bybit") {
+        BybitExchange* ex = new BybitExchange();
+        newHandle.ExchangeName = "bybit";
+        newHandle.ExchangeObj = ex;
+        ex->Init(api, secret);
+        Objects.push_back(ex);
+        return newHandle;
+    }
+
     newHandle.ExchangeObj = nullptr;
     return newHandle;
 }
@@ -42,7 +52,6 @@ timestamp_t GetServerTime(CryptoMarketHandle& h)
 
 bool SetExchangeObjLogger(CryptoMarketHandle handle, BaseLogger* logger)
 {
-    CryptoMarketHandle newHandle;
     if (handle.ExchangeName == "binance") {
         static_cast<BinanceExchange*>(handle.ExchangeObj)->SetLogger(logger);
         return true;
@@ -53,12 +62,17 @@ bool SetExchangeObjLogger(CryptoMarketHandle handle, BaseLogger* logger)
         return true;
     }
 
+    if (handle.ExchangeName == "bybit") {
+        static_cast<BybitExchange*>(handle.ExchangeObj)->SetLogger(logger);
+        return true;
+    }
+
     return false;
 }
 
-bool GetExchangeInfo(CryptoMarketHandle& h, ExchangeInfo& info)
+bool GetSymbols(CryptoMarketHandle& h, std::list<Symbol> &symbols)
 {
-    return static_cast<ExchangeObj*>(h.ExchangeObj)->GetExchangeInfo(info);
+    return static_cast<ExchangeObj*>(h.ExchangeObj)->GetSymbols(symbols);
 }
 
 bool GetAllPrices(CryptoMarketHandle &h, Prices& prices)

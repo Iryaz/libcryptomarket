@@ -21,7 +21,7 @@ protected:
 
 private:
     virtual timestamp_t ParseServerTime(const json::value& json);
-    virtual bool ParseExchangeInfo(const json::value& json, ExchangeInfo& info);
+    virtual bool ParseSymbols(const json::value& json, std::list<Symbol> &symbols);
     virtual bool ParseAllPrices(const json::value& json, Prices &prices);
     virtual bool ParseMarketDepth(const json::value& json, MarketDepth& Asks, MarketDepth& Bids, uint64_t& lastUpdateId);
     virtual bool ParseAggregateTradesList(const json::value& json, TradesList& trades);
@@ -29,7 +29,7 @@ private:
     virtual bool ParseAccount(const json::value& json, AccountInfo& info);
 
     virtual string BuildTimeUrl();
-    virtual string BuildExchangeInfoUrl();
+    virtual string BuildSymbolsUrl();
     virtual string BuildAllPricesUrl();
     virtual string BuildMarketDepthUrl(const string symbol, int limit);
     virtual string BuildAggregateTradesUrl(const string symbol, timestamp_t start_time, timestamp_t end_time, int limit);

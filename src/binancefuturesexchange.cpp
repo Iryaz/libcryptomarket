@@ -49,9 +49,9 @@ string BinanceFuturesExchange::BuildAccountUrl(timestamp_t timestamp)
     return url;
 }
 
-bool BinanceFuturesExchange::ParseExchangeInfo(const json::value &json, ExchangeInfo &info)
+bool BinanceFuturesExchange::ParseSymbols(const json::value &json, std::list<Symbol> &symbols)
 {
-    info.Symbols.clear();
+    symbols.clear();
     for (auto i : json.at("symbols").as_array()) {
         if (i.at("status") == "TRADING") {
             Symbol s(true);
@@ -68,7 +68,7 @@ bool BinanceFuturesExchange::ParseExchangeInfo(const json::value &json, Exchange
                 s.SetQtyStep(std::stod(i.at("filters").at(2).at("stepSize").as_string().c_str()));
             }
 
-            info.Symbols.push_back(s);
+            symbols.push_back(s);
         }
     }
 

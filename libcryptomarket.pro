@@ -15,6 +15,7 @@ SOURCES += \
     src/libcryptomarket.cpp \
     src/binanceexchange.cpp \
     src/binancefuturesexchange.cpp \
+    src/bybitexchange.cpp \
     src/consolelogger.cpp \
     src/exchangeobj.cpp \
     src/symbol.cpp \
@@ -24,6 +25,7 @@ SOURCES += \
 
 HEADERS += \
     include/binanceexchange.h \
+    include/bybitexchange.h \
     include/binancefuturesexchange.h \
     include/exchangeobj.h \
     include/websocket/basewebsocket.h \

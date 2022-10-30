@@ -61,23 +61,23 @@ timestamp_t ExchangeObj::GetServerTime()
     return server_time;
 }
 
-bool ExchangeObj::GetExchangeInfo(ExchangeInfo &info)
+bool ExchangeObj::GetSymbols(std::list<Symbol> &symbols)
 {
     string str_result;
-    string url = BuildExchangeInfoUrl();
+    string url = BuildSymbolsUrl();
     GetUrl(url, str_result);
     bool ret = false;;
 
-    InfoMessage((F("<ExchangeObj::GetExchangeInfo> Url: |%s|") % url.c_str()).str());
+    InfoMessage((F("<ExchangeObj::GetSymbols> Url: |%s|") % url.c_str()).str());
     if (str_result.size() > 0) {
         try {
             JSON_PARSE
-            ret = ParseExchangeInfo(value, info);
+            ret = ParseSymbols(value, symbols);
         } catch (std::exception& e) {
-            ErrorMessage((F("<ExchangeObj::GetExchangeInfo> Error ! %s") % e.what()).str());
+            ErrorMessage((F("<ExchangeObj::GetSymbols> Error ! %s") % e.what()).str());
         }
     } else
-        ErrorMessage("<ExchangeObj::GetExchangeInfo> Failed to get anything.");
+        ErrorMessage("<ExchangeObj::GetSymbols> Failed to get anything.");
 
 
     curl_easy_reset(curl);

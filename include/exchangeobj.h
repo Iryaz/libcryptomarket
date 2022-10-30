@@ -28,7 +28,7 @@ public:
     void Cleanup();
 
     timestamp_t GetServerTime();
-    bool GetExchangeInfo(ExchangeInfo& info);
+    bool GetSymbols(std::list<Symbol> &symbols);
     bool GetAllPrices(Prices& prices);
     bool GetMarketDepth(const string &symbol, int limit, MarketDepth& Asks, MarketDepth& Bids, uint64_t& lastUpdateId);
     bool GetTrades(const string& symbol, timestamp_t start_time, timestamp_t end_time, int limit, TradesList& trades);
@@ -48,7 +48,7 @@ protected:
     void GetUrlWithHeader(string &url, string &str_result, vector<string> &extra_http_header, string &post_data, string &action);
 
     virtual string BuildTimeUrl() = 0;
-    virtual string BuildExchangeInfoUrl() = 0;
+    virtual string BuildSymbolsUrl() = 0;
     virtual string BuildAllPricesUrl() = 0;
     virtual string BuildMarketDepthUrl(const string symbol, int limit) = 0;
     virtual string BuildAggregateTradesUrl(const string symbol, timestamp_t start_time, timestamp_t end_time, int limit) = 0;
@@ -56,7 +56,7 @@ protected:
     virtual string BuildAccountUrl(timestamp_t timestamp) = 0;
 
     virtual timestamp_t ParseServerTime(const json::value& value) = 0;
-    virtual bool ParseExchangeInfo(const json::value& value, ExchangeInfo& info) = 0;
+    virtual bool ParseSymbols(const json::value& value, std::list<Symbol> &symbols) = 0;
     virtual bool ParseAllPrices(const json::value& value, Prices& prices) = 0;
     virtual bool ParseMarketDepth(const json::value& value, MarketDepth& Asks, MarketDepth& Bids, uint64_t& lastUpdateId) = 0;
     virtual bool ParseAggregateTradesList(const json::value& value, TradesList& trades) = 0;

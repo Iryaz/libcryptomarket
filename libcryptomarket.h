@@ -88,10 +88,6 @@ enum TimeFrame {
     TimeFrame_1d = 5,
 };
 
-struct ExchangeInfo {
-    std::list<Symbol> Symbols;
-};
-
 struct Balance {
     std::string Asset;
     double Free;
@@ -137,7 +133,7 @@ CryptoMarketHandle NewExchangeObj(const string& name, const std::string &api = "
 timestamp_t GetServerTime(CryptoMarketHandle& h);
 
 bool SetExchangeObjLogger(CryptoMarketHandle handle, BaseLogger* logger);
-bool GetExchangeInfo(CryptoMarketHandle &h, ExchangeInfo& info);
+bool GetSymbols(CryptoMarketHandle &h, std::list<Symbol> &symbols);
 bool GetAllPrices(CryptoMarketHandle &h, Prices& prices);
 bool GetMarketDepth(CryptoMarketHandle &h, const string &symbol, int limit, MarketDepth& Asks, MarketDepth& Bids, uint64_t& lastUpdateId);
 bool GetTrades(CryptoMarketHandle &h, const string& symbol, timestamp_t start_time, timestamp_t end_time, int limit, TradesList& trades);
