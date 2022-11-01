@@ -129,6 +129,7 @@ bool BybitExchange::ParseMarketDepth(const json::value& value, MarketDepth& Asks
         auto bids_array = value.at("result").at("bids").as_array();
         for (auto& i : bids_array) {
             Depth depth;
+            depth.Type = Depth::New;
             auto d = i.as_array();
             depth.Price = std::atof(d.at(0).as_string().c_str());
             depth.Qty = std::atof(d.at(1).as_string().c_str());
@@ -138,6 +139,7 @@ bool BybitExchange::ParseMarketDepth(const json::value& value, MarketDepth& Asks
         auto asks_array = value.at("result").at("asks").as_array();
         for (auto& i : asks_array) {
             Depth depth;
+            depth.Type = Depth::New;
             auto d = i.as_array();
             depth.Price = std::atof(d.at(0).as_string().c_str());
             depth.Qty = std::atof(d.at(1).as_string().c_str());

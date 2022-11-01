@@ -80,9 +80,10 @@ bool GetAllPrices(CryptoMarketHandle &h, Prices& prices)
     return static_cast<ExchangeObj*>(h.ExchangeObj)->GetAllPrices(prices);
 }
 
-bool GetMarketDepth(CryptoMarketHandle &h, const string &symbol, int limit, MarketDepth& Asks, MarketDepth& Bids, uint64_t& lastUpdateId)
+bool GetMarketDepth(CryptoMarketHandle &h, const string &symbol, int limit, MarketDepth& Asks, MarketDepth& Bids)
 {
-    return static_cast<ExchangeObj*>(h.ExchangeObj)->GetMarketDepth(symbol, limit, Asks, Bids, lastUpdateId);
+    uint64_t lasUpdateId = 0;
+    return static_cast<ExchangeObj*>(h.ExchangeObj)->GetMarketDepth(symbol, limit, Asks, Bids, lasUpdateId);
 }
 
 bool GetTrades(CryptoMarketHandle &h, const string& symbol, timestamp_t start_time, timestamp_t end_time, int limit, TradesList& trades)

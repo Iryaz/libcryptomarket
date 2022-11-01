@@ -29,7 +29,7 @@ public:
     const std::string GetExchange()                     { return Exchange_;         }
     virtual void SetSymbol(const std::string& symbol)   { Symbol_ = symbol;         }
     virtual void SetPath(const std::string& path);
-    virtual void SetPort(int port);
+    virtual void SetWebSocketPort(int port);
     void SetHost(const std::string& exchange_host);
     void StartThread();
     void Stop();
@@ -73,6 +73,8 @@ protected:
     void ErrorMessage(const string& message);
     void InfoMessage(const string& message);
     void WarningMessage(const string& message);
+
+    int GetSubcribeFlags() { return SubscribeFlags; }
 
 private:
     std::thread *Thread_Ptr;;

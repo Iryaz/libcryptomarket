@@ -69,6 +69,12 @@ struct Price {
 };
 
 struct Depth {
+    enum DepthType {
+        New = 0,
+        Update = 1,
+        Remove = 2
+    };
+    DepthType Type;
     double Price;
     double Qty;
 };
@@ -135,7 +141,7 @@ timestamp_t GetServerTime(CryptoMarketHandle& h);
 bool SetExchangeObjLogger(CryptoMarketHandle handle, BaseLogger* logger);
 bool GetSymbols(CryptoMarketHandle &h, std::list<Symbol> &symbols);
 bool GetAllPrices(CryptoMarketHandle &h, Prices& prices);
-bool GetMarketDepth(CryptoMarketHandle &h, const string &symbol, int limit, MarketDepth& Asks, MarketDepth& Bids, uint64_t& lastUpdateId);
+bool GetMarketDepth(CryptoMarketHandle &h, const string &symbol, int limit, MarketDepth& Asks, MarketDepth& Bids);
 bool GetTrades(CryptoMarketHandle &h, const string& symbol, timestamp_t start_time, timestamp_t end_time, int limit, TradesList& trades);
 bool GetCandles(CryptoMarketHandle &h, const string& symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit, CandlesList& candles);
 bool GetAccount(CryptoMarketHandle &h, AccountInfo& info);
@@ -144,7 +150,6 @@ bool Free(CryptoMarketHandle handle);
 void Cleanup();
 
 // Web Socket API
-
 static const int MARKET_DEPTH_SUBSCRIBE = 0x1;
 static const int TRADES_SUBSCRIBE = 0x2;
 static const int CANDLES_SUBSCRIBE_1m = 0x4;

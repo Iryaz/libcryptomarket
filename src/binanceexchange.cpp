@@ -168,6 +168,7 @@ bool BinanceExchange::ParseMarketDepth(const json::value &json, MarketDepth& Ask
 
     for (auto a : AsksList) {
         Depth d;
+        d.Type = Depth::New;
         d.Price = std::stod(a.at(0).as_string().c_str());
         d.Qty = std::stod(a.at(1).as_string().c_str());
         Asks.push_back(d);
@@ -175,6 +176,7 @@ bool BinanceExchange::ParseMarketDepth(const json::value &json, MarketDepth& Ask
 
     for (auto b : BidsList) {
         Depth d;
+        d.Type = Depth::New;
         d.Price = std::stod(b.at(0).as_string().c_str());
         d.Qty = std::stod(b.at(1).as_string().c_str());
         Bids.push_back(d);

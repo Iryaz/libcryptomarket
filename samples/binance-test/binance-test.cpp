@@ -15,23 +15,29 @@ static void UpdateCandle(void*, const std::string&, const std::string& symbol, T
     std::cout << "Candle " << "Symbol: " << symbol << " C: " << candle.Close << " O: " << candle.Open << "\n";
 }
 
+static void UpdateMarketDepth(void*, const std::string&, const std::string& symbol, MarketDepthSeries& series)
+{
+    std::cout << "Market depth " << "Symbol: " << symbol << " " << series.Items.size() << "\n";
+}
+
 int main()
 {
     ConsoleLogger Logger;
-    ExchangeInfo info;
+    std::list<Symbol> info;
     CryptoMarketHandle Exchange = NewExchangeObj("binance-futures");
     SetExchangeObjLogger(Exchange, &Logger);
     std::cout << "Server time: " << GetServerTime(Exchange) << "\n";
-    GetExchangeInfo(Exchange, info);
-    std::cout << "Exchange symbol count: " << info.Symbols.size() << "\n";
+    GetSymbols(Exchange, info);
+    std::cout << "Exchange symbol count: " << info.size() << "\n";
 
     WebSocketObj Handle;
-    Handle = CreateWebSocketObj("binance-futures", "BTCUSDT", TRADES_SUBSCRIBE|CANDLES_SUBSCRIBE_1m|CANDLES_SUBSCRIBE_5m);
+    Handle = CreateWebSocketObj("binance-futures", "BTCUSDT", MARKET_DEPTH_SUBSCRIBE);
     SetWebSocketLogger(Handle, &Logger);
     SetWebSocketAddTradeCallback(Handle, AddTrade);
     SetWebSocketUpdateCandleCallback(Handle, UpdateCandle);
+    SetWebSocketUpdateMarketDepthCallback(Handle, UpdateMarketDepth);
     StartWebSocket(Handle);
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    std::this_thread::sleep_for(std::chrono::seconds(50));
 
     StopWebSocket(Handle);
     DeleteWebSocket(Handle);

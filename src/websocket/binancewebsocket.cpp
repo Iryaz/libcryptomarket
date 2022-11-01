@@ -1,37 +1,64 @@
-﻿#include <iostream>
+﻿#include <boost/format.hpp>
+#include "binanceexchange.h"
+#include "binancefuturesexchange.h"
+#include <iostream>
 #include "websocket/binancewebsocket.h"
-#include <boost/format.hpp>
 
 #define F(S) boost::format(S)
 
 BinanceWebSocket::BinanceWebSocket(Type type, const std::string& symbol, int subscribe_flags) :
     BaseWebSocket(type, symbol, subscribe_flags)
 {
+    LastUpdateId_ = -1;
     SetSymbol(symbol);
     switch (Type_) {
     case Spot: {
-        SetPort(9443);
+        BaseWebSocket::SetWebSocketPort(9443);
         SetHost("stream.binance.com");
         Exchange_ = "binance";
         SetPath("/ws/");
+        BinanceObj_ = new BinanceExchange();
     } break;
     case Futures: {
-        SetPort(443);
+        BaseWebSocket::SetWebSocketPort(443);
         SetHost("fstream.binance.com");
         Exchange_ = "binance-futures";
         SetPath("/stream?streams=");
+        BinanceObj_ = new BinanceFuturesExchange();
     } break;
     default:
         break;
     }
 
     Init(GetSubscribeFlags());
+    BinanceObj_->Init("", "");
+}
+
+BinanceWebSocket::~BinanceWebSocket()
+{
+    if (BinanceObj_ != nullptr)
+        delete BinanceObj_;
+}
+
+bool BinanceWebSocket::StartLoop()
+{
+    if (GetSubcribeFlags() & MARKET_DEPTH_SUBSCRIBE) {
+            MarketDepthSeries asks;
+            MarketDepthSeries bids;
+            BinanceObj_->GetMarketDepth(GetSymbol(), 100, asks.Items, bids.Items, LastUpdateId_);
+            if (UpdateMarketDepthCallback_ != nullptr) {
+                UpdateMarketDepthCallback_(Context_, Exchange_, GetSymbol(), bids);
+                UpdateMarketDepthCallback_(Context_, Exchange_, GetSymbol(), asks);
+            }
+    }
+    return BaseWebSocket::StartLoop();
 }
 
 void BinanceWebSocket::Init(int flag)
 {
     if (flag & MARKET_DEPTH_SUBSCRIBE)
         PathParams_ += GetSymbol() + "@depth@100ms" + "/";
+
     if (flag & TRADES_SUBSCRIBE)
         PathParams_ += GetSymbol() + "@aggTrade" + "/";
     if (flag & CANDLES_SUBSCRIBE_1m)
@@ -129,13 +156,18 @@ BaseWebSocket::DataEventType BinanceWebSocket::String2EventType(const std::strin
 void BinanceWebSocket::ParseMarketDepth(const json::value& json)
 {
     try {
-        timestamp_t new_updateId  = json.at("u").as_int64();
+        timestamp_t eventTime  = json.at("E").to_number<timestamp_t>();
         std::string symbol = json.at("s").as_string().c_str();
         MarketDepthSeries BidsDepth;
         MarketDepthSeries AsksDepth;
+        uint64_t FirstUpdateId = json.at("U").to_number<uint64_t>();
+        uint64_t FinalUpdateId = json.at("u").to_number<uint64_t>();
 
-        BidsDepth.UpdateTime = new_updateId;
-        AsksDepth.UpdateTime = new_updateId;
+        if (FirstUpdateId <= LastUpdateId_+1 && FinalUpdateId >= LastUpdateId_+1)
+            LastUpdateId_ = FinalUpdateId;
+
+        BidsDepth.UpdateTime = eventTime;
+        AsksDepth.UpdateTime = eventTime;
 
         BidsDepth.IsBids = true;
         AsksDepth.IsBids = false;
@@ -144,8 +176,13 @@ void BinanceWebSocket::ParseMarketDepth(const json::value& json)
             double price = atof(b.at(0).as_string().c_str());
             double qty 	 = atof(b.at(1).as_string().c_str());
             Depth item;
+            item.Type = Depth::Update;
             item.Price = price;
             item.Qty = qty;
+            if (item.Qty <= 0)
+                item.Type = Depth::Remove;
+            if (FinalUpdateId < LastUpdateId_)
+                item.Type = Depth::Remove;
             BidsDepth.Items.push_back(item);
             if (UpdateMarketDepthCallback_ != nullptr)
                 UpdateMarketDepthCallback_(Context_, Exchange_, symbol, BidsDepth);
@@ -155,11 +192,16 @@ void BinanceWebSocket::ParseMarketDepth(const json::value& json)
             double price = atof(a.at(0).as_string().c_str());
             double qty 	 = atof(a.at(1).as_string().c_str());
             Depth item;
+            item.Type = Depth::Update;
             item.Price = price;
             item.Qty = qty;
+            if (item.Qty <= 0)
+                item.Type = Depth::Remove;
+            if (FinalUpdateId < LastUpdateId_)
+                item.Type = Depth::Remove;
             AsksDepth.Items.push_back(item);
             if (UpdateMarketDepthCallback_ != nullptr)
-                UpdateMarketDepthCallback_(Context_, Exchange_, symbol, BidsDepth);
+                UpdateMarketDepthCallback_(Context_, Exchange_, symbol, AsksDepth);
         }
     } catch (std::exception& e) {
         ErrorMessage((F("<BinanceWebSocket::ParseMarketDepth> Error parsing json: %s") % e.what()).str());

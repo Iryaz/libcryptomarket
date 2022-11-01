@@ -43,7 +43,7 @@ BaseWebSocket::~BaseWebSocket()
     }
 }
 
-void BaseWebSocket::SetPort(int port)
+void BaseWebSocket::SetWebSocketPort(int port)
 {
     Port = std::to_string(port);
 }

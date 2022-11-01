@@ -28,13 +28,13 @@ ByBitWebsocket::ByBitWebsocket(Type type, const std::string &symbol, int subscri
     case Spot: {
         SetHost("stream.bybit.com");
         SetPath("/spot/ws");
-        SetPort(443);
+        SetWebSocketPort(443);
         Exchange_ = "bybit";
     } break;
     case Futures: {
         SetHost("stream.bytick.com");
         SetPath("/realtime_public");
-        SetPort(443);
+        SetWebSocketPort(443);
         Exchange_ = "bybit-futures";
     } break;
     default:
@@ -145,6 +145,7 @@ void ByBitWebsocket::ParseMarketDepth(const json::value& json)
         auto order_book = data.at("order_book").as_array();
         for (auto& i : order_book) {
             Depth d;
+            d.Type = Depth::New;
             d.Price = atof(i.at("price").as_string().c_str());
             d.Qty = i.at("size").to_number<double>();
             if (i.at("side") == "Buy")
@@ -158,13 +159,21 @@ void ByBitWebsocket::ParseMarketDepth(const json::value& json)
         if (data.at("delete").is_array()) {
             auto array = data.at("delete").as_array();
             for (auto& i : array) {
-
+                Depth d;
+                d.Type = Depth::Remove;
+                d.Price = atof(i.at("price").as_string().c_str());
+                d.Qty = i.at("size").to_number<double>();
+                if (i.at("side") == "Buy")
+                    buyseries.Items.push_back(d);
+                else
+                    sellseries.Items.push_back(d);
             }
         }
         if (data.at("insert").is_array()) {
             auto array = data.at("insert").as_array();
             for (auto& i : array) {
                 Depth d;
+                d.Type = Depth::New;
                 d.Price = atof(i.at("price").as_string().c_str());
                 d.Qty = i.at("size").to_number<double>();
                 if (i.at("side") == "Buy")
@@ -178,6 +187,7 @@ void ByBitWebsocket::ParseMarketDepth(const json::value& json)
             auto array = data.at("update").as_array();
             for (auto& i : array) {
                 Depth d;
+                d.Type = Depth::Update;
                 d.Price = atof(i.at("price").as_string().c_str());
                 d.Qty = i.at("size").to_number<double>();
                 if (i.at("side") == "Buy")
