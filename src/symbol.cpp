@@ -66,3 +66,13 @@ void Symbol::SetQtyStep(double step)
 {
     QtyStep_ = step;
 }
+
+void Symbol::SetExchange(const string& name)
+{
+    Exchange_ = name;
+}
+
+const string& Symbol::GetExchange()
+{
+    return Exchange_;
+}

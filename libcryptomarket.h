@@ -47,11 +47,13 @@ public:
     double GetPriceStep();
     double GetQtyStep();
 
+    void SetExchange(const string& name);
     void SetPriceStep(double step);
     void SetQtyStep(double step);
 
     int GetPricePrecision();
     int GetQtyPrecision();
+    const string& GetExchange();
 
     int QuotePrecison;
     Asset Base;
@@ -61,6 +63,7 @@ private:
     bool Valid_;
     double PriceStep_;
     double QtyStep_;
+    string Exchange_;
 };
 
 struct Price {
@@ -77,12 +80,6 @@ struct Depth {
     DepthType Type;
     double Price;
     double Qty;
-};
-
-struct MarketDepthSeries {
-    timestamp_t UpdateTime;
-    std::list<Depth> Items;
-    bool IsBids;
 };
 
 enum TimeFrame {
@@ -163,7 +160,7 @@ static const int ALL_SUBSCRIBE = MARKET_DEPTH_SUBSCRIBE|TRADES_SUBSCRIBE|
         CANDLES_SUBSCRIBE_1h|CANDLES_SUBSCRIBE_4h|CANDLES_SUBSCRIBE_1d;
 
 typedef void* WebSocketObj;
-typedef void (*UpdateMarketDepthEvent)(void*, const std::string&, const std::string&, MarketDepthSeries& series);
+typedef void (*UpdateMarketDepthEvent)(void*, const std::string&, const std::string&, MarketDepth& asks, MarketDepth& bids);
 typedef void (*AddTradeEvent)(void*, const std::string&, const std::string&, Trade& trade);
 typedef void (*UpdateCandleEvent)(void*, const std::string&, const std::string&, TimeFrame tf, Candle& candle);
 

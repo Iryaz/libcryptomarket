@@ -15,9 +15,9 @@ static void UpdateCandle(void*, const std::string&, const std::string& symbol, T
     std::cout << "Candle " << "Symbol: " << symbol << " C: " << candle.Close << " O: " << candle.Open << "\n";
 }
 
-static void UpdateMarketDepth(void*, const std::string&, const std::string& symbol, MarketDepthSeries& series)
+static void UpdateMarketDepth(void*, const std::string&, const std::string& symbol, MarketDepth& asks, MarketDepth& bids)
 {
-    std::cout << "Market depth " << "Symbol: " << symbol << " " << series.Items.size() << "\n";
+    std::cout << "Market depth " << "Symbol: " << symbol << "\n";
 }
 
 int main()

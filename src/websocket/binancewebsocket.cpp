@@ -43,14 +43,13 @@ BinanceWebSocket::~BinanceWebSocket()
 bool BinanceWebSocket::StartLoop()
 {
     if (GetSubcribeFlags() & MARKET_DEPTH_SUBSCRIBE) {
-            MarketDepthSeries asks;
-            MarketDepthSeries bids;
-            BinanceObj_->GetMarketDepth(GetSymbol(), 100, asks.Items, bids.Items, LastUpdateId_);
-            if (UpdateMarketDepthCallback_ != nullptr) {
-                UpdateMarketDepthCallback_(Context_, Exchange_, GetSymbol(), bids);
-                UpdateMarketDepthCallback_(Context_, Exchange_, GetSymbol(), asks);
-            }
+            MarketDepth asks;
+            MarketDepth bids;
+            BinanceObj_->GetMarketDepth(GetSymbol(), 100, asks, bids, LastUpdateId_);
+            if (UpdateMarketDepthCallback_ != nullptr)
+                UpdateMarketDepthCallback_(Context_, Exchange_, GetSymbol(), asks, bids);
     }
+
     return BaseWebSocket::StartLoop();
 }
 
@@ -158,21 +157,15 @@ void BinanceWebSocket::ParseMarketDepth(const json::value& json)
     try {
         timestamp_t eventTime  = json.at("E").to_number<timestamp_t>();
         std::string symbol = json.at("s").as_string().c_str();
-        MarketDepthSeries BidsDepth;
-        MarketDepthSeries AsksDepth;
+        MarketDepth Bids;
+        MarketDepth Asks;
         uint64_t FirstUpdateId = json.at("U").to_number<uint64_t>();
         uint64_t FinalUpdateId = json.at("u").to_number<uint64_t>();
 
-        if (FirstUpdateId <= LastUpdateId_+1 && FinalUpdateId >= LastUpdateId_+1)
-            LastUpdateId_ = FinalUpdateId;
+        //if (FirstUpdateId <= LastUpdateId_+1 && FinalUpdateId >= LastUpdateId_+1)
+        //    LastUpdateId_ = FinalUpdateId;
 
-        BidsDepth.UpdateTime = eventTime;
-        AsksDepth.UpdateTime = eventTime;
-
-        BidsDepth.IsBids = true;
-        AsksDepth.IsBids = false;
-
-        for (auto b : json.at("b").as_array()) {
+        for (auto& b : json.at("b").as_array()) {
             double price = atof(b.at(0).as_string().c_str());
             double qty 	 = atof(b.at(1).as_string().c_str());
             Depth item;
@@ -181,14 +174,12 @@ void BinanceWebSocket::ParseMarketDepth(const json::value& json)
             item.Qty = qty;
             if (item.Qty <= 0)
                 item.Type = Depth::Remove;
-            if (FinalUpdateId < LastUpdateId_)
+            if (FinalUpdateId <= LastUpdateId_)
                 item.Type = Depth::Remove;
-            BidsDepth.Items.push_back(item);
-            if (UpdateMarketDepthCallback_ != nullptr)
-                UpdateMarketDepthCallback_(Context_, Exchange_, symbol, BidsDepth);
+            Bids.push_back(item);
         }
 
-        for (auto a : json.at("a").as_array()) {
+        for (auto& a : json.at("a").as_array()) {
             double price = atof(a.at(0).as_string().c_str());
             double qty 	 = atof(a.at(1).as_string().c_str());
             Depth item;
@@ -197,12 +188,14 @@ void BinanceWebSocket::ParseMarketDepth(const json::value& json)
             item.Qty = qty;
             if (item.Qty <= 0)
                 item.Type = Depth::Remove;
-            if (FinalUpdateId < LastUpdateId_)
+            if (FinalUpdateId <= LastUpdateId_)
                 item.Type = Depth::Remove;
-            AsksDepth.Items.push_back(item);
-            if (UpdateMarketDepthCallback_ != nullptr)
-                UpdateMarketDepthCallback_(Context_, Exchange_, symbol, AsksDepth);
+            Asks.push_back(item);
         }
+
+        if (UpdateMarketDepthCallback_ != nullptr)
+            UpdateMarketDepthCallback_(Context_, Exchange_, symbol, Asks, Bids);
+
     } catch (std::exception& e) {
         ErrorMessage((F("<BinanceWebSocket::ParseMarketDepth> Error parsing json: %s") % e.what()).str());
     }

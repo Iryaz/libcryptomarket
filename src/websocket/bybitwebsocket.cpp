@@ -134,84 +134,80 @@ void ByBitWebsocket::ParseJSon(boost::json::value& result)
 
 void ByBitWebsocket::ParseMarketDepth(const json::value& json)
 {
-    MarketDepthSeries buyseries;
-    MarketDepthSeries sellseries;
+    MarketDepth buyseries;
+    MarketDepth sellseries;
     auto data = json.at("data").as_object();
     timestamp_t time = std::stoull(json.at("timestamp_e6").as_string().c_str());
-    buyseries.UpdateTime = time;
-    sellseries.UpdateTime = time;
 
     if (json.at("type") == "snapshot") {
-        auto order_book = data.at("order_book").as_array();
+        auto& order_book = data.at("order_book").as_array();
         for (auto& i : order_book) {
             Depth d;
             d.Type = Depth::New;
             d.Price = atof(i.at("price").as_string().c_str());
             d.Qty = i.at("size").to_number<double>();
             if (i.at("side") == "Buy")
-                buyseries.Items.push_back(d);
+                buyseries.push_back(d);
             else
-                sellseries.Items.push_back(d);
+                sellseries.push_back(d);
         }
     }
 
     if (json.at("type") == "delta") {
         if (data.at("delete").is_array()) {
-            auto array = data.at("delete").as_array();
+            auto& array = data.at("delete").as_array();
             for (auto& i : array) {
                 Depth d;
                 d.Type = Depth::Remove;
                 d.Price = atof(i.at("price").as_string().c_str());
                 d.Qty = i.at("size").to_number<double>();
                 if (i.at("side") == "Buy")
-                    buyseries.Items.push_back(d);
+                    buyseries.push_back(d);
                 else
-                    sellseries.Items.push_back(d);
+                    sellseries.push_back(d);
             }
         }
         if (data.at("insert").is_array()) {
-            auto array = data.at("insert").as_array();
+            auto& array = data.at("insert").as_array();
             for (auto& i : array) {
                 Depth d;
                 d.Type = Depth::New;
                 d.Price = atof(i.at("price").as_string().c_str());
                 d.Qty = i.at("size").to_number<double>();
                 if (i.at("side") == "Buy")
-                    buyseries.Items.push_back(d);
+                    buyseries.push_back(d);
                 else
-                    sellseries.Items.push_back(d);
+                    sellseries.push_back(d);
             }
         }
 
         if (data.at("update").is_array()) {
-            auto array = data.at("update").as_array();
+            auto& array = data.at("update").as_array();
             for (auto& i : array) {
                 Depth d;
                 d.Type = Depth::Update;
                 d.Price = atof(i.at("price").as_string().c_str());
                 d.Qty = i.at("size").to_number<double>();
                 if (i.at("side") == "Buy")
-                    buyseries.Items.push_back(d);
+                    buyseries.push_back(d);
                 else
-                    sellseries.Items.push_back(d);
+                    sellseries.push_back(d);
             }
         }
 
     }
 
-    if (UpdateMarketDepthCallback_ != nullptr) {
-        UpdateMarketDepthCallback_(Context_, Exchange_, Symbol_, buyseries);
-        UpdateMarketDepthCallback_(Context_, Exchange_, Symbol_, sellseries);
-    }
+    if (UpdateMarketDepthCallback_ != nullptr)
+        UpdateMarketDepthCallback_(Context_, Exchange_, Symbol_, sellseries, buyseries);
 }
 
 void ByBitWebsocket::ParseTrades(const json::value& json)
 {
     Trade trade;
-    auto arr = json.at("data").as_array();
+    auto& arr = json.at("data").as_array();
     for (const auto &itr : arr) {
-        auto obj = itr.as_object();
-        auto symbol = obj.at("symbol").as_string();
+        auto& obj = itr.as_object();
+        auto& symbol = obj.at("symbol").as_string();
         trade.Price = atof(obj.at("price").as_string().c_str());
         trade.Qty = obj.at("size").as_double();
         if (obj.at("side").as_string() == "Buy")
@@ -228,9 +224,9 @@ void ByBitWebsocket::ParseTrades(const json::value& json)
 void ByBitWebsocket::ParseKLines(const json::value& json)
 {
     try {
-        auto data = json.at("data").as_array();
-        for (auto itr : data) {
-            auto obj = itr.as_object();
+        auto& data = json.at("data").as_array();
+        for (auto& itr : data) {
+            auto& obj = itr.as_object();
             Candle c;
             c.OpenTime = obj.at("start").to_number<timestamp_t>();
             c.CloseTime = obj.at("end").to_number<timestamp_t>();

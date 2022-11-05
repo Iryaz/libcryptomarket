@@ -15,7 +15,7 @@ bool BinanceFuturesExchange::ParseAccount(const json::value &json, AccountInfo &
 {
     info.Balance.clear();
     info.AccountType = "FUTURES";
-    for (auto b : json.at("assets").as_array()) {
+    for (auto& b : json.at("assets").as_array()) {
         Balance balance;
         balance.Asset = b.at("asset").as_string().c_str();
         balance.Free = std::stod(b.at("availableBalance").as_string().c_str());
@@ -52,9 +52,10 @@ string BinanceFuturesExchange::BuildAccountUrl(timestamp_t timestamp)
 bool BinanceFuturesExchange::ParseSymbols(const json::value &json, std::list<Symbol> &symbols)
 {
     symbols.clear();
-    for (auto i : json.at("symbols").as_array()) {
+    for (auto& i : json.at("symbols").as_array()) {
         if (i.at("status") == "TRADING") {
             Symbol s(true);
+            s.SetExchange("binance-futures");
             s.Base.AssetPrecision = i.at("baseAssetPrecision").to_number<int>();
             //s.Base.ComissionPrecision = i.at("baseCommissionPrecision").to_number<int>();
             s.Base.Name = i.at("baseAsset").as_string().c_str();

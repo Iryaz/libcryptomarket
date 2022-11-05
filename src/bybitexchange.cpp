@@ -74,10 +74,11 @@ bool BybitExchange::ParseSymbols(const json::value& value, std::list<Symbol> &sy
         if (value.at("ret_code").to_number<int>() != 0)
             return false;
 
-        auto symbols_list = value.at("result").as_array();
+        auto& symbols_list = value.at("result").as_array();
         for (auto& i : symbols_list) {
             auto& s = i.as_object();
             Symbol symbol(true);
+            symbol.SetExchange("bybit");
             symbol.Base.Name = s.at("baseCurrency").as_string().c_str();
             symbol.Base.AssetPrecision = std::atof(s.at("basePrecision").as_string().c_str());
             symbol.Quote.Name = s.at("quoteCurrency").as_string().c_str();
@@ -101,7 +102,7 @@ bool BybitExchange::ParseAllPrices(const json::value& value, Prices& prices)
         if (value.at("ret_code").to_number<int>() != 0)
             return false;
 
-        auto price_array = value.at("result").as_array();
+        auto& price_array = value.at("result").as_array();
         for (auto& i : price_array) {
             Price price;
             auto& p = i.as_object();
@@ -126,7 +127,7 @@ bool BybitExchange::ParseMarketDepth(const json::value& value, MarketDepth& Asks
         if (value.at("ret_code").to_number<int>() != 0)
             return false;
 
-        auto bids_array = value.at("result").at("bids").as_array();
+        auto& bids_array = value.at("result").at("bids").as_array();
         for (auto& i : bids_array) {
             Depth depth;
             depth.Type = Depth::New;
@@ -136,7 +137,7 @@ bool BybitExchange::ParseMarketDepth(const json::value& value, MarketDepth& Asks
             Bids.push_back(depth);
         }
 
-        auto asks_array = value.at("result").at("asks").as_array();
+        auto& asks_array = value.at("result").at("asks").as_array();
         for (auto& i : asks_array) {
             Depth depth;
             depth.Type = Depth::New;

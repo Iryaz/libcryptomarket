@@ -12,6 +12,7 @@ INCLUDEPATH += ./lib/
 INCLUDEPATH += C:\boost_1_80_0\
 
 SOURCES += \
+    src/bybitfuturesexchange.cpp \
     src/libcryptomarket.cpp \
     src/binanceexchange.cpp \
     src/binancefuturesexchange.cpp \
@@ -27,6 +28,7 @@ HEADERS += \
     include/binanceexchange.h \
     include/bybitexchange.h \
     include/binancefuturesexchange.h \
+    include/bybitfuturesexchange.h \
     include/exchangeobj.h \
     include/websocket/basewebsocket.h \
     include/websocket/binancewebsocket.h \

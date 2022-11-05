@@ -15,7 +15,7 @@ static void UpdateCandle(void*, const std::string&, const std::string& symbol, T
     //std::cout << "Candle " << "Symbol: " << symbol << " C: " << candle.Close << " O: " << candle.Open << "\n";
 }
 
-static void UpdateMarketDepth(void*, const std::string&, const std::string& symbol, MarketDepthSeries& series)
+static void UpdateMarketDepth(void*, const std::string&, const std::string& symbol, MarketDepth& asks, MarketDepth& bids)
 {
     //std::cout << "Market Depth" << " Symbol: " << symbol << " Series count: " << series.Items.size() << "\n";
 }
@@ -35,8 +35,7 @@ int main()
 
     MarketDepth asks;
     MarketDepth bids;
-    uint64_t id;
-    GetMarketDepth(Exchange, "BTCUSDT", 100, asks, bids, id);
+    GetMarketDepth(Exchange, "BTCUSDT", 100, asks, bids);
     std::cout << "Asks count " << asks.size() << " Bids count " << bids.size() << "\n";
 
     TradesList trades;

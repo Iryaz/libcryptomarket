@@ -123,9 +123,10 @@ string BinanceExchange::BuildAccountUrl(timestamp_t timestamp)
 bool BinanceExchange::ParseSymbols(const json::value &json, std::list<Symbol> &symbols)
 {
     symbols.clear();
-    for (auto i : json.at("symbols").as_array()) {
+    for (auto& i : json.at("symbols").as_array()) {
         if (i.at("status") == "TRADING") {
             Symbol s(true);
+            s.SetExchange("binance");
             s.Base.AssetPrecision = i.at("baseAssetPrecision").to_number<int>();
             s.Base.ComissionPrecision = i.at("baseCommissionPrecision").to_number<int>();
             s.Base.Name = i.at("baseAsset").as_string().c_str();
@@ -149,7 +150,7 @@ bool BinanceExchange::ParseSymbols(const json::value &json, std::list<Symbol> &s
 bool BinanceExchange::ParseAllPrices(const json::value &json, Prices& prices)
 {
     prices.clear();
-    for (auto p : json.as_array()) {
+    for (auto& p : json.as_array()) {
         Price price;
         price.symbol = p.at("symbol").as_string().c_str();
         price.price = std::stod(p.at("price").as_string().c_str());
@@ -163,10 +164,10 @@ bool BinanceExchange::ParseMarketDepth(const json::value &json, MarketDepth& Ask
     Asks.clear();
     Bids.clear();
     lastUpdateId = json.at("lastUpdateId").as_int64();
-    auto AsksList = json.at("asks").as_array();
-    auto BidsList = json.at("bids").as_array();
+    auto& AsksList = json.at("asks").as_array();
+    auto& BidsList = json.at("bids").as_array();
 
-    for (auto a : AsksList) {
+    for (auto& a : AsksList) {
         Depth d;
         d.Type = Depth::New;
         d.Price = std::stod(a.at(0).as_string().c_str());
@@ -174,7 +175,7 @@ bool BinanceExchange::ParseMarketDepth(const json::value &json, MarketDepth& Ask
         Asks.push_back(d);
     }
 
-    for (auto b : BidsList) {
+    for (auto& b : BidsList) {
         Depth d;
         d.Type = Depth::New;
         d.Price = std::stod(b.at(0).as_string().c_str());
@@ -188,7 +189,7 @@ bool BinanceExchange::ParseMarketDepth(const json::value &json, MarketDepth& Ask
 bool BinanceExchange::ParseAggregateTradesList(const json::value &json, TradesList& trades)
 {
     trades.clear();
-    for (auto t : json.as_array()) {
+    for (auto& t : json.as_array()) {
         Trade trade;
         trade.Id = t.at("a").to_number<uint64_t>();
         trade.Time = t.at("T").to_number<uint64_t>();
@@ -204,7 +205,7 @@ bool BinanceExchange::ParseAggregateTradesList(const json::value &json, TradesLi
 bool BinanceExchange::ParseCandles(const json::value &json, CandlesList& candles)
 {
     candles.clear();
-    for (auto c : json.as_array()) {
+    for (auto& c : json.as_array()) {
         Candle candle;
         candle.OpenTime = c.at(0).to_number<uint64_t>();
         candle.Open = std::stod(c.at(1).as_string().c_str());
@@ -225,7 +226,7 @@ bool BinanceExchange::ParseAccount(const json::value &json, AccountInfo &info)
 {
     info.Balance.clear();
     info.AccountType = json.at("accountType").as_string().c_str();
-    for (auto b : json.at("balances").as_array()) {
+    for (auto& b : json.at("balances").as_array()) {
         Balance balance;
         balance.Asset = b.at("asset").as_string().c_str();
         balance.Free = std::stod(b.at("free").as_string().c_str());

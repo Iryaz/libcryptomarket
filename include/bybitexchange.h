@@ -25,10 +25,10 @@ protected:
     virtual bool ParseCandles(const json::value& value, CandlesList& candles);
     virtual bool ParseAccount(const json::value& value, AccountInfo& info);
 
-private:
     const string GetInterval(TimeFrame tf);
-
     string ApiServer_;
+
+private:
     const string BYBIT_SERVER = "https://api.bytick.com";
     const string API_PATH = "";
 };

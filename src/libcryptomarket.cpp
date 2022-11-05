@@ -1,5 +1,6 @@
 ﻿#include "binancefuturesexchange.h"
 #include "bybitexchange.h"
+#include "bybitfuturesexchange.h"
 #include "exchangeobj.h"
 #include "websocket/binancewebsocket.h"
 #include "websocket/bybitwebsocket.h"
@@ -41,6 +42,15 @@ CryptoMarketHandle NewExchangeObj(const string& name, const string& api, const s
         return newHandle;
     }
 
+    if (name == "bybit-futures") {
+        BybitFuturesExchange* ex = new BybitFuturesExchange();
+        newHandle.ExchangeName = "bybit-futures";
+        newHandle.ExchangeObj = ex;
+        ex->Init(api, secret);
+        Objects.push_back(ex);
+        return newHandle;
+    }
+
     newHandle.ExchangeObj = nullptr;
     return newHandle;
 }
@@ -64,6 +74,11 @@ bool SetExchangeObjLogger(CryptoMarketHandle handle, BaseLogger* logger)
 
     if (handle.ExchangeName == "bybit") {
         static_cast<BybitExchange*>(handle.ExchangeObj)->SetLogger(logger);
+        return true;
+    }
+
+    if (handle.ExchangeName == "bybit-futures") {
+        static_cast<BybitFuturesExchange*>(handle.ExchangeObj)->SetLogger(logger);
         return true;
     }
 
