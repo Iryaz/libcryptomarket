@@ -16,9 +16,9 @@ string BybitExchange::BuildSymbolsUrl()
     return ApiServer_ + "/spot/v1/symbols";
 }
 
-string BybitExchange::BuildAllPricesUrl()
+string BybitExchange::BuildTicker24Url()
 {
-    return ApiServer_ + "/spot/quote/v1/ticker/price";
+    return ApiServer_ + "/spot/v3/public/quote/ticker/24hr";
 }
 
 string BybitExchange::BuildMarketDepthUrl(const string symbol, int limit)
@@ -95,24 +95,31 @@ bool BybitExchange::ParseSymbols(const json::value& value, std::list<Symbol> &sy
     return true;
 }
 
-bool BybitExchange::ParseAllPrices(const json::value& value, Prices& prices)
+bool BybitExchange::ParseTicker24(const json::value& value, std::list<Ticker24h>& tickers)
 {
     try {
-        prices.clear();
+        tickers.clear();
         if (value.at("ret_code").to_number<int>() != 0)
             return false;
 
-        auto& price_array = value.at("result").as_array();
-        for (auto& i : price_array) {
-            Price price;
+        auto& ticker_array = value.at("result").as_array();
+        for (auto& i : ticker_array) {
+            Ticker24h ticker;
             auto& p = i.as_object();
-            price.symbol = p.at("symbol").as_string();
-            price.price = std::atof(p.at("price").as_string().c_str());
-            prices.push_back(price);
+            ticker.Exchange = "bybit";
+            ticker.Symbol = p.at("s").as_string();
+            ticker.High = std::atof(p.at("h").as_string().c_str());
+            ticker.Low = std::atof(p.at("l").as_string().c_str());
+            ticker.Open = std::atof(p.at("o").as_string().c_str());
+            ticker.LastPrice = std::atof(p.at("lp").as_string().c_str());
+            ticker.QuoteVolume = std::atof(p.at("qv").as_string().c_str());
+            ticker.Volume = std::atof(p.at("v").as_string().c_str());
+
+            tickers.push_back(ticker);
         }
         return true;
     } catch (std::exception& e) {
-        ErrorMessage("<BybitExchange::ParseAllPrices> Error Parse Json");
+        ErrorMessage("<BybitExchange::ParseTicker24> Error Parse Json");
         return false;
     }
 

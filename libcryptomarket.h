@@ -66,9 +66,15 @@ private:
     string Exchange_;
 };
 
-struct Price {
-    std::string symbol;
-    double price;
+struct Ticker24h {
+    string Symbol;
+    string Exchange;
+    double Open;
+    double High;
+    double Low;
+    double LastPrice;
+    double Volume;
+    double QuoteVolume;
 };
 
 struct Depth {
@@ -122,7 +128,6 @@ struct Candle {
     int NumberOfTrades;
 };
 
-typedef std::list<Price> Prices;
 typedef std::list<Depth> MarketDepth;
 typedef std::list<Trade> TradesList;
 typedef std::list<Candle> CandlesList;
@@ -137,7 +142,7 @@ timestamp_t GetServerTime(CryptoMarketHandle& h);
 
 bool SetExchangeObjLogger(CryptoMarketHandle handle, BaseLogger* logger);
 bool GetSymbols(CryptoMarketHandle &h, std::list<Symbol> &symbols);
-bool GetAllPrices(CryptoMarketHandle &h, Prices& prices);
+bool GetTicker24(CryptoMarketHandle &h, std::list<Ticker24h>& tickers);
 bool GetMarketDepth(CryptoMarketHandle &h, const string &symbol, int limit, MarketDepth& Asks, MarketDepth& Bids);
 bool GetTrades(CryptoMarketHandle &h, const string& symbol, timestamp_t start_time, timestamp_t end_time, int limit, TradesList& trades);
 bool GetCandles(CryptoMarketHandle &h, const string& symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit, CandlesList& candles);
@@ -163,7 +168,6 @@ typedef void* WebSocketObj;
 typedef void (*UpdateMarketDepthEvent)(void*, const std::string&, const std::string&, MarketDepth& asks, MarketDepth& bids);
 typedef void (*AddTradeEvent)(void*, const std::string&, const std::string&, Trade& trade);
 typedef void (*UpdateCandleEvent)(void*, const std::string&, const std::string&, TimeFrame tf, Candle& candle);
-
 
 WebSocketObj CreateWebSocketObj(const std::string& exchange, const std::string& symbol, int subscribe_flags = ALL_SUBSCRIBE);
 bool SetWebSocketLogger(WebSocketObj ws, BaseLogger* logger);

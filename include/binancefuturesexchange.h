@@ -13,8 +13,11 @@ public:
     ~BinanceFuturesExchange();
 
 private:
-    bool ParseAccount(const json::value& json, AccountInfo &info);
+    string BuildTicker24Url();
     string BuildAccountUrl(timestamp_t timestamp);
+
+    bool ParseTicker24(const json::value& value, std::list<Ticker24h>& tickers);
+    bool ParseAccount(const json::value& json, AccountInfo &info);
     bool ParseSymbols(const json::value &json, std::list<Symbol> &symbols);
 
     const string API_PATH = "/fapi";

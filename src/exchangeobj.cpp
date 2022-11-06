@@ -86,24 +86,24 @@ bool ExchangeObj::GetSymbols(std::list<Symbol> &symbols)
     return ret;
 }
 
-bool ExchangeObj::GetAllPrices(Prices &prices)
+bool ExchangeObj::GetTicker24(std::list<Ticker24h>& tickers)
 {
-    InfoMessage("<ExchangeObj::GetAllPrices>");
+    InfoMessage("<ExchangeObj::GetTicker24>");
     bool ret = false;
 
     string str_result;
-    string url = BuildAllPricesUrl();
+    string url = BuildTicker24Url();
     GetUrl(url, str_result);
 
     if (str_result.size() > 0) {
         try {
             JSON_PARSE
-            ret = ParseAllPrices(value, prices);
+            ret = ParseTicker24(value, tickers);
         } catch (std::exception& e) {
-            ErrorMessage((F("<ExchangeObj::GetAllPrices> Error ! %s") % e.what()).str());
+            ErrorMessage((F("<ExchangeObj::GetTicker24> Error ! %s") % e.what()).str());
         }
     } else {
-        ErrorMessage("<ExchangeObj::GetAllPrices> Failed to get anything.");
+        ErrorMessage("<ExchangeObj::GetTicker24> Failed to get anything.");
     }
 
     curl_easy_reset(curl);

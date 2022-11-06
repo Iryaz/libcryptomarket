@@ -90,9 +90,9 @@ bool GetSymbols(CryptoMarketHandle& h, std::list<Symbol> &symbols)
     return static_cast<ExchangeObj*>(h.ExchangeObj)->GetSymbols(symbols);
 }
 
-bool GetAllPrices(CryptoMarketHandle &h, Prices& prices)
+bool GetTicker24(CryptoMarketHandle &h, std::list<Ticker24h>& tickers)
 {
-    return static_cast<ExchangeObj*>(h.ExchangeObj)->GetAllPrices(prices);
+    return static_cast<ExchangeObj*>(h.ExchangeObj)->GetTicker24(tickers);
 }
 
 bool GetMarketDepth(CryptoMarketHandle &h, const string &symbol, int limit, MarketDepth& Asks, MarketDepth& Bids)

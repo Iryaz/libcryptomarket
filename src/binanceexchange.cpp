@@ -29,9 +29,9 @@ string BinanceExchange::BuildSymbolsUrl()
     return ApiServer_ + ApiType_ + "/v1/exchangeInfo";
 }
 
-string BinanceExchange::BuildAllPricesUrl()
+string BinanceExchange::BuildTicker24Url()
 {
-    return ApiServer_ + ApiType_ + "/v1/ticker/allPrices";
+    return ApiServer_ + ApiType_ + "/v3/ticker/24hr";
 }
 
 string BinanceExchange::BuildMarketDepthUrl(const string symbol, int limit)
@@ -147,15 +147,24 @@ bool BinanceExchange::ParseSymbols(const json::value &json, std::list<Symbol> &s
     return true;
 }
 
-bool BinanceExchange::ParseAllPrices(const json::value &json, Prices& prices)
+bool BinanceExchange::ParseTicker24(const json::value& value, std::list<Ticker24h>& tickers)
 {
-    prices.clear();
-    for (auto& p : json.as_array()) {
-        Price price;
-        price.symbol = p.at("symbol").as_string().c_str();
-        price.price = std::stod(p.at("price").as_string().c_str());
-        prices.push_back(price);
+    tickers.clear();
+    for (auto& p : value.as_array()) {
+        Ticker24h ticker;
+        ticker.Exchange = "binance";
+
+        ticker.Symbol = p.at("symbol").as_string().c_str();
+        ticker.High = std::stod(p.at("highPrice").as_string().c_str());
+        ticker.LastPrice = std::stod(p.at("lastPrice").as_string().c_str());
+        ticker.Low = std::stod(p.at("lowPrice").as_string().c_str());
+        ticker.Open = std::stod(p.at("openPrice").as_string().c_str());
+        ticker.QuoteVolume = std::stod(p.at("quoteVolume").as_string().c_str());
+        ticker.Volume = std::stod(p.at("volume").as_string().c_str());
+
+        tickers.push_back(ticker);
     }
+
     return true;
 }
 
