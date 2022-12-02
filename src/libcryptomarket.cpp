@@ -116,6 +116,11 @@ bool GetAccount(CryptoMarketHandle &h, AccountInfo& info)
     return static_cast<ExchangeObj*>(h.ExchangeObj)->GetAccount(info);
 }
 
+bool GetOpenOrders(CryptoMarketHandle &h, OrderList& orders)
+{
+    return static_cast<ExchangeObj*>(h.ExchangeObj)->GetOpenOrders(orders);
+}
+
 bool Free(CryptoMarketHandle handle)
 {
     ExchangeObj* Ptr = static_cast<ExchangeObj*>(handle.ExchangeObj);

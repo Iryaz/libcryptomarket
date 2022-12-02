@@ -34,6 +34,7 @@ public:
     bool GetTrades(const string& symbol, timestamp_t start_time, timestamp_t end_time, int limit, TradesList& trades);
     bool GetCandles(const string& symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit, CandlesList& candles);
     bool GetAccount(AccountInfo& info);
+    bool GetOpenOrders(OrderList& orders);
 
     void SetLogger(BaseLogger* logger) { Logger_ = logger; }
 
@@ -57,6 +58,7 @@ protected:
     virtual string BuildAggregateTradesUrl(const string symbol, timestamp_t start_time, timestamp_t end_time, int limit) = 0;
     virtual string BuildCandlesUrl(const string symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit) = 0;
     virtual string BuildAccountUrl(timestamp_t timestamp) = 0;
+    virtual string BuildOpenOrdersUrl(timestamp_t timestamp) = 0;
 
     virtual timestamp_t ParseServerTime(const json::value& value) = 0;
     virtual bool ParseSymbols(const json::value& value, std::list<Symbol> &symbols) = 0;
@@ -65,6 +67,7 @@ protected:
     virtual bool ParseAggregateTradesList(const json::value& value, TradesList& trades) = 0;
     virtual bool ParseCandles(const json::value& value, CandlesList& candles) = 0;
     virtual bool ParseAccount(const json::value& value, AccountInfo& info) = 0;
+    virtual bool ParseOpenOrders(const json::value& value, OrderList& orders) = 0;
 
     virtual string Timeframe2String(TimeFrame tf);
     virtual bool IsError(const json::value &result);

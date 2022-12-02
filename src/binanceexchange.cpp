@@ -120,6 +120,28 @@ string BinanceExchange::BuildAccountUrl(timestamp_t timestamp)
     return url;
 }
 
+string BinanceExchange::BuildOpenOrdersUrl(timestamp_t timestamp)
+{
+    string url = ApiServer_;
+    url += ApiType_ + "/v1/openOrders?";
+
+    string querystring("timestamp=");
+    querystring.append(std::to_string(timestamp));
+
+    if (RecvWindow_ > 0) {
+        querystring.append("&recvWindow=");
+        querystring.append(std::to_string(RecvWindow_));
+    }
+
+    string signature =  hmac_sha256(SecretKey_.c_str(), querystring.c_str());
+    querystring.append("&signature=");
+    querystring.append(signature);
+
+    url.append(querystring);
+
+    return url;
+}
+
 bool BinanceExchange::ParseSymbols(const json::value &json, std::list<Symbol> &symbols)
 {
     symbols.clear();
@@ -244,4 +266,95 @@ bool BinanceExchange::ParseAccount(const json::value &json, AccountInfo &info)
     }
 
     return true;
+}
+
+/*
+ * [
+  {
+    "avgPrice": "0.00000",
+    "clientOrderId": "abc",
+    "cumQuote": "0",
+    "executedQty": "0",
+    "orderId": 1917641,
+    "origQty": "0.40",
+    "origType": "TRAILING_STOP_MARKET",
+    "price": "0",
+    "reduceOnly": false,
+    "side": "BUY",
+    "positionSide": "SHORT",
+    "status": "NEW",
+    "stopPrice": "9300",                // please ignore when order type is TRAILING_STOP_MARKET
+    "closePosition": false,   // if Close-All
+    "symbol": "BTCUSDT",
+    "time": 1579276756075,              // order time
+    "timeInForce": "GTC",
+    "type": "TRAILING_STOP_MARKET",
+    "activatePrice": "9020",            // activation price, only return with TRAILING_STOP_MARKET order
+    "priceRate": "0.3",                 // callback rate, only return with TRAILING_STOP_MARKET order
+    "updateTime": 1579276756075,        // update time
+    "workingType": "CONTRACT_PRICE",
+    "priceProtect": false            // if conditional order trigger is protected
+  }
+]
+ * */
+
+bool BinanceExchange::ParseOpenOrders(const json::value& value, OrderList& orders)
+{
+    orders.clear();
+    for (auto& o : value.as_array()) {
+        auto& order = o.as_object();
+        Order neworder;
+        neworder.Id = order.at("orderId").to_number<uint64_t>();
+        neworder.Price = std::atof(order.at("price").as_string().c_str());
+        neworder.Qty = std::atof(order.at("origQty").as_string().c_str());
+        neworder.Side = String2OrderSide(order.at("side").as_string().c_str());
+        neworder.Status = String2OrderStatus(order.at("status").as_string().c_str());
+        neworder.Symbol = order.at("symbol").as_string().c_str();
+        neworder.Type = String2OrderType(order.at("type").as_string().c_str());
+        neworder.Time = order.at("time").to_number<timestamp_t>();
+        neworder.UpdateTime = order.at("updateTime").to_number<timestamp_t>();
+
+        orders.push_back(neworder);
+    }
+
+    return true;
+}
+
+Direct BinanceExchange::String2OrderSide(std::string s)
+{
+    if (s == "BUY")
+        return Direct::Buy;
+
+    if (s == "SELL")
+        return Direct::Sell;
+
+    return Direct::Buy;
+}
+
+OrderStatus BinanceExchange::String2OrderStatus(std::string s)
+{
+    if (s == "NEW")
+        return OrderStatus::New;
+    if (s == "FILLED")
+        return OrderStatus::Filled;
+    if (s == "CANCELLED")
+        return OrderStatus::Cancelled;
+
+    return OrderStatus::New;
+}
+
+OrderType BinanceExchange::String2OrderType(std::string s)
+{
+    if (s == "TRAILING_STOP_MARKET")
+        return OrderType::StopMarket;
+    if (s == "MARKET")
+        return OrderType::Market;
+    if (s == "LIMIT")
+        return OrderType::Limit;
+    if (s == "STOP/TAKE_PROFIT")
+        return OrderType::TakeProfit;
+    if (s == "STOP_MARKET/TAKE_PROFIT_MARKET")
+        return OrderType::TakeProfitMarket;
+
+    return OrderType::Limit;
 }

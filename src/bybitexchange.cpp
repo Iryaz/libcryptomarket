@@ -54,6 +54,11 @@ string BybitExchange::BuildAccountUrl(timestamp_t timestamp)
     return ApiServer_ + "/spot/v1/account";
 }
 
+string BybitExchange::BuildOpenOrdersUrl(timestamp_t timestamp)
+{
+    return "";
+}
+
 timestamp_t BybitExchange::ParseServerTime(const json::value& value)
 {
     try {
@@ -221,7 +226,12 @@ bool BybitExchange::ParseCandles(const json::value& value, CandlesList& candles)
 
 bool BybitExchange::ParseAccount(const json::value& value, AccountInfo& info)
 {
+    return true;
+}
 
+bool BybitExchange::ParseOpenOrders(const json::value& value, OrderList& orders)
+{
+    return true;
 }
 
 const string BybitExchange::GetInterval(TimeFrame tf)

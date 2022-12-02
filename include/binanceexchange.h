@@ -16,6 +16,10 @@ protected:
     string ApiType_;
     string ApiServer_;
 
+    Direct String2OrderSide(std::string s);
+    OrderStatus String2OrderStatus(std::string s);
+    OrderType String2OrderType(std::string s);
+
 private:
     virtual timestamp_t ParseServerTime(const json::value& json);
     virtual bool ParseSymbols(const json::value& json, std::list<Symbol> &symbols);
@@ -24,6 +28,7 @@ private:
     virtual bool ParseAggregateTradesList(const json::value& json, TradesList& trades);
     virtual bool ParseCandles(const json::value& json, CandlesList& candles);
     virtual bool ParseAccount(const json::value& json, AccountInfo& info);
+    virtual bool ParseOpenOrders(const json::value& json, OrderList& orders);
 
     virtual string BuildTimeUrl();
     virtual string BuildSymbolsUrl();
@@ -32,6 +37,7 @@ private:
     virtual string BuildAggregateTradesUrl(const string symbol, timestamp_t start_time, timestamp_t end_time, int limit);
     virtual string BuildCandlesUrl(const string symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit);
     virtual string BuildAccountUrl(timestamp_t timestamp);
+    virtual string BuildOpenOrdersUrl(timestamp_t timestamp);
 
     const string BINANCE_SERVER = "https://api.binance.com";
     const string API_PATH = "/api";

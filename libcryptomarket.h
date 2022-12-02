@@ -97,6 +97,11 @@ enum TimeFrame {
     TimeFrame_1d = 5,
 };
 
+enum Direct {
+    Buy = 0,
+    Sell = 1
+};
+
 struct Balance {
     std::string Asset;
     double Free;
@@ -128,9 +133,36 @@ struct Candle {
     int NumberOfTrades;
 };
 
+enum OrderType {
+    Limit,
+    Market,
+    TakeProfit,
+    TakeProfitMarket,
+    StopMarket
+};
+
+enum OrderStatus {
+    New,
+    Filled,
+    Cancelled
+};
+
+struct Order {
+    Direct Side;
+    std::string Symbol;
+    double Qty;
+    double Price;
+    timestamp_t Time;
+    timestamp_t UpdateTime;
+    unsigned long long Id;
+    OrderType Type;
+    OrderStatus Status;
+};
+
 typedef std::list<Depth> MarketDepth;
 typedef std::list<Trade> TradesList;
 typedef std::list<Candle> CandlesList;
+typedef std::list<Order> OrderList;
 
 struct CryptoMarketHandle {
     void* ExchangeObj;
@@ -147,6 +179,7 @@ bool GetMarketDepth(CryptoMarketHandle &h, const string &symbol, int limit, Mark
 bool GetTrades(CryptoMarketHandle &h, const string& symbol, timestamp_t start_time, timestamp_t end_time, int limit, TradesList& trades);
 bool GetCandles(CryptoMarketHandle &h, const string& symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit, CandlesList& candles);
 bool GetAccount(CryptoMarketHandle &h, AccountInfo& info);
+bool GetOpenOrders(CryptoMarketHandle &h, OrderList& orders);
 
 bool Free(CryptoMarketHandle handle);
 void Cleanup();

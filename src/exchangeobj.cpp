@@ -223,6 +223,43 @@ bool ExchangeObj::GetAccount(AccountInfo &info)
     return ret;
 }
 
+bool ExchangeObj::GetOpenOrders(OrderList& orders)
+{
+    bool ret = false;
+    InfoMessage("<ExchangeObj::GetAllOrders>");
+    if (ApiKey_.size() == 0 || SecretKey_.size() == 0) {
+        WarningMessage("<ExchangeObj::GetAllOrders> API Key and Secret Key has not been set.");
+        return false;
+    }
+
+    timestamp_t timestamp = GetServerTime();
+    string url = BuildOpenOrdersUrl(timestamp);
+    vector<string> extra_http_header;
+    string header_chunk("X-MBX-APIKEY: ");
+    header_chunk.append(ApiKey_);
+    extra_http_header.push_back(header_chunk);
+
+    InfoMessage((F("<ExchangeObj::GetAllOrders> url = |%s|") % url.c_str()).str());
+    string post_data = "";
+
+    string str_result;
+    string action = "GET";
+    GetUrlWithHeader(url, str_result, extra_http_header, post_data, action);
+    if (str_result.size() > 0) {
+        try {
+            JSON_PARSE
+            ret = ParseOpenOrders(value, orders);
+        } catch (std::exception &e) {
+            ErrorMessage((F("<ExchangeObj::GetAllOrders> Error ! %s") % e.what()).str());
+        }
+    } else {
+        ErrorMessage("<ExchangeObj::GetAllOrders> Failed to get anything.");
+    }
+
+    curl_easy_reset(curl);
+    return ret;
+}
+
 void ExchangeObj::Cleanup()
 {
     curl_easy_cleanup(curl);
