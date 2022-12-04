@@ -17,6 +17,8 @@ protected:
     virtual string BuildCandlesUrl(const string symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit);
     virtual string BuildAccountUrl(timestamp_t timestamp);
     virtual string BuildOpenOrdersUrl(timestamp_t timestamp);
+    virtual string BuildNewOrderUrl(timestamp_t timestamp, const std::string &symbol, OrderType type, Direct direct, double qty, double price);
+    virtual string BuildCancelOrderUrl(timestamp_t timestamp, Order &order);
 
     virtual timestamp_t ParseServerTime(const json::value& value);
     virtual bool ParseSymbols(const json::value& value, std::list<Symbol> &symbols);
@@ -26,6 +28,8 @@ protected:
     virtual bool ParseCandles(const json::value& value, CandlesList& candles);
     virtual bool ParseAccount(const json::value& value, AccountInfo& info);
     virtual bool ParseOpenOrders(const json::value& json, OrderList& orders);
+    virtual bool ParseNewOrder(const json::value& value, Order& order);
+    virtual bool ParseCancelOrder(const json::value& value);
 
     const string GetInterval(TimeFrame tf);
     string ApiServer_;

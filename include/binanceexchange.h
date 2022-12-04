@@ -20,6 +20,9 @@ protected:
     OrderStatus String2OrderStatus(std::string s);
     OrderType String2OrderType(std::string s);
 
+    string OrderSide2String(Direct direct);
+    string OrderType2String(OrderType type);
+
 private:
     virtual timestamp_t ParseServerTime(const json::value& json);
     virtual bool ParseSymbols(const json::value& json, std::list<Symbol> &symbols);
@@ -29,6 +32,8 @@ private:
     virtual bool ParseCandles(const json::value& json, CandlesList& candles);
     virtual bool ParseAccount(const json::value& json, AccountInfo& info);
     virtual bool ParseOpenOrders(const json::value& json, OrderList& orders);
+    virtual bool ParseNewOrder(const json::value& value, Order& order);
+    virtual bool ParseCancelOrder(const json::value& value);
 
     virtual string BuildTimeUrl();
     virtual string BuildSymbolsUrl();
@@ -38,6 +43,8 @@ private:
     virtual string BuildCandlesUrl(const string symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit);
     virtual string BuildAccountUrl(timestamp_t timestamp);
     virtual string BuildOpenOrdersUrl(timestamp_t timestamp);
+    virtual string BuildNewOrderUrl(timestamp_t timestamp, const std::string &symbol, OrderType type, Direct direct, double qty, double price);
+    virtual string BuildCancelOrderUrl(timestamp_t timestamp, Order &order);
 
     const string BINANCE_SERVER = "https://api.binance.com";
     const string API_PATH = "/api";

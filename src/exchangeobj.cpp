@@ -260,6 +260,80 @@ bool ExchangeObj::GetOpenOrders(OrderList& orders)
     return ret;
 }
 
+bool ExchangeObj::NewOrder(OrderType type, std::string& symbol, Direct direct, double qty, double price, Order& newOrder)
+{
+    bool ret = false;
+    InfoMessage("<ExchangeObj::NewOrder>");
+    if (ApiKey_.size() == 0 || SecretKey_.size() == 0) {
+        WarningMessage("<ExchangeObj::NewOrder> API Key and Secret Key has not been set.");
+        return false;
+    }
+
+    timestamp_t timestamp = GetServerTime();
+    string url = BuildNewOrderUrl(timestamp, symbol, type, direct, qty, price);
+    vector<string> extra_http_header;
+    string header_chunk("X-MBX-APIKEY: ");
+    header_chunk.append(ApiKey_);
+    extra_http_header.push_back(header_chunk);
+
+    InfoMessage((F("<ExchangeObj::NewOrder> url = |%s|") % url.c_str()).str());
+    string post_data = "";
+
+    string str_result;
+    string action = "POST";
+    GetUrlWithHeader(url, str_result, extra_http_header, post_data, action);
+    if (str_result.size() > 0) {
+        try {
+            JSON_PARSE
+            ret = ParseNewOrder(value, newOrder);
+        } catch (std::exception &e) {
+            ErrorMessage((F("<ExchangeObj::NewOrder> Error ! %s") % e.what()).str());
+        }
+    } else {
+        ErrorMessage("<ExchangeObj::NewOrder> Failed to get anything.");
+    }
+
+    curl_easy_reset(curl);
+    return ret;
+}
+
+bool ExchangeObj::CancelOrder(Order &order)
+{
+    bool ret = false;
+    InfoMessage("<ExchangeObj::CancelOrder>");
+    if (ApiKey_.size() == 0 || SecretKey_.size() == 0) {
+        WarningMessage("<ExchangeObj::CancelOrder> API Key and Secret Key has not been set.");
+        return false;
+    }
+
+    timestamp_t timestamp = GetServerTime();
+    string url = BuildCancelOrderUrl(timestamp, order);
+    vector<string> extra_http_header;
+    string header_chunk("X-MBX-APIKEY: ");
+    header_chunk.append(ApiKey_);
+    extra_http_header.push_back(header_chunk);
+
+    InfoMessage((F("<ExchangeObj::CancelOrder> url = |%s|") % url.c_str()).str());
+    string post_data = "";
+
+    string str_result;
+    string action = "DELETE";
+    GetUrlWithHeader(url, str_result, extra_http_header, post_data, action);
+    if (str_result.size() > 0) {
+        try {
+            JSON_PARSE
+            ret = ParseCancelOrder(value);
+        } catch (std::exception &e) {
+            ErrorMessage((F("<ExchangeObj::CancelOrder> Error ! %s") % e.what()).str());
+        }
+    } else {
+        ErrorMessage("<ExchangeObj::CancelOrder> Failed to get anything.");
+    }
+
+    curl_easy_reset(curl);
+    return ret;
+}
+
 void ExchangeObj::Cleanup()
 {
     curl_easy_cleanup(curl);

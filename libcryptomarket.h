@@ -136,15 +136,14 @@ struct Candle {
 enum OrderType {
     Limit,
     Market,
-    TakeProfit,
-    TakeProfitMarket,
-    StopMarket
+    StopLossTakeProfit,
+    StopLosstTakeProfitMarket,
 };
 
 enum OrderStatus {
     New,
     Filled,
-    Cancelled
+    Canceled
 };
 
 struct Order {
@@ -180,6 +179,8 @@ bool GetTrades(CryptoMarketHandle &h, const string& symbol, timestamp_t start_ti
 bool GetCandles(CryptoMarketHandle &h, const string& symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit, CandlesList& candles);
 bool GetAccount(CryptoMarketHandle &h, AccountInfo& info);
 bool GetOpenOrders(CryptoMarketHandle &h, OrderList& orders);
+bool NewOrder(CryptoMarketHandle &h, std::string &symbol, OrderType type, Direct direct, double qty, double price, Order& newOrder);
+bool CancelOrder(CryptoMarketHandle &h, Order& order);
 
 bool Free(CryptoMarketHandle handle);
 void Cleanup();

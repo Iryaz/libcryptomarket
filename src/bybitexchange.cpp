@@ -59,6 +59,16 @@ string BybitExchange::BuildOpenOrdersUrl(timestamp_t timestamp)
     return "";
 }
 
+string BybitExchange::BuildNewOrderUrl(timestamp_t timestamp, const std::string &symbol, OrderType type, Direct direct, double qty, double price)
+{
+    return "";
+}
+
+string BybitExchange::BuildCancelOrderUrl(timestamp_t timestamp, Order &order)
+{
+    return "";
+}
+
 timestamp_t BybitExchange::ParseServerTime(const json::value& value)
 {
     try {
@@ -226,12 +236,22 @@ bool BybitExchange::ParseCandles(const json::value& value, CandlesList& candles)
 
 bool BybitExchange::ParseAccount(const json::value& value, AccountInfo& info)
 {
-    return true;
+    return false;
 }
 
 bool BybitExchange::ParseOpenOrders(const json::value& value, OrderList& orders)
 {
-    return true;
+    return false;
+}
+
+bool BybitExchange::ParseNewOrder(const json::value &value, Order& order)
+{
+    return false;
+}
+
+bool BybitExchange::ParseCancelOrder(const json::value& value)
+{
+    return false;
 }
 
 const string BybitExchange::GetInterval(TimeFrame tf)

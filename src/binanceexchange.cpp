@@ -142,6 +142,80 @@ string BinanceExchange::BuildOpenOrdersUrl(timestamp_t timestamp)
     return url;
 }
 
+string BinanceExchange::BuildNewOrderUrl(timestamp_t timestamp, const string& symbol, OrderType type, Direct direct, double qty, double price)
+{
+    string url = ApiServer_;
+    url += ApiType_ + "/v1/order?";
+
+    string querystring("timestamp=");
+    querystring.append(std::to_string(timestamp));
+
+    if (RecvWindow_ > 0) {
+        querystring.append("&recvWindow=");
+        querystring.append(std::to_string(RecvWindow_));
+    }
+
+    querystring.append("&symbol=");
+    querystring.append(symbol);
+
+    querystring.append("&type=");
+    querystring.append(OrderType2String(type));
+
+    querystring.append("&side=");
+    querystring.append(OrderSide2String(direct));
+
+    querystring.append("&quantity=");
+    querystring.append(std::to_string(qty));
+
+    if (type == OrderType::Limit) {
+        querystring.append("&price=");
+        querystring.append(std::to_string(price));
+        querystring.append("&timeInForce=");
+        querystring.append("GTC");
+    }
+
+    if (type == OrderType::StopLosstTakeProfitMarket) {
+        querystring.append("&stopPrice=");
+        querystring.append(std::to_string(price));
+    }
+
+    string signature =  hmac_sha256(SecretKey_.c_str(), querystring.c_str());
+    querystring.append("&signature=");
+    querystring.append(signature);
+
+    url.append(querystring);
+
+    return url;
+}
+
+string BinanceExchange::BuildCancelOrderUrl(timestamp_t timestamp, Order &order)
+{
+    string url = ApiServer_;
+    url += ApiType_ + "/v1/order?";
+
+    string querystring("timestamp=");
+    querystring.append(std::to_string(timestamp));
+
+    if (RecvWindow_ > 0) {
+        querystring.append("&recvWindow=");
+        querystring.append(std::to_string(RecvWindow_));
+    }
+
+    querystring.append("&symbol=");
+    querystring.append(order.Symbol);
+
+    querystring.append("&orderId=");
+    querystring.append(std::to_string(order.Id));
+
+    string signature =  hmac_sha256(SecretKey_.c_str(), querystring.c_str());
+    querystring.append("&signature=");
+    querystring.append(signature);
+
+    url.append(querystring);
+
+    return url;
+}
+
 bool BinanceExchange::ParseSymbols(const json::value &json, std::list<Symbol> &symbols)
 {
     symbols.clear();
@@ -320,6 +394,37 @@ bool BinanceExchange::ParseOpenOrders(const json::value& value, OrderList& order
     return true;
 }
 
+bool BinanceExchange::ParseNewOrder(const json::value &value, Order& order)
+{
+    try {
+        order.Id = value.at("orderId").to_number<uint64_t>();
+        order.Price = atof(value.at("price").as_string().c_str());
+        order.Qty = atof(value.at("origQty").as_string().c_str());
+        order.Side = String2OrderSide(value.at("side").as_string().c_str());
+        order.Symbol = value.at("symbol").as_string().c_str();
+        order.Status = String2OrderStatus(value.at("status").as_string().c_str());
+        order.Time = value.at("updateTime").to_number<timestamp_t>();
+        order.UpdateTime = value.at("updateTime").to_number<timestamp_t>();
+        order.Type = String2OrderType(value.at("type").as_string().c_str());
+    } catch (std::exception& e) {
+        return false;
+    }
+
+    return true;
+}
+
+bool BinanceExchange::ParseCancelOrder(const json::value& json)
+{
+    try {
+        if (json.at("code").to_number<int>() < 0)
+            return false;
+    } catch (std::exception& e) {
+        return true;
+    }
+
+    return true;
+}
+
 Direct BinanceExchange::String2OrderSide(std::string s)
 {
     if (s == "BUY")
@@ -337,8 +442,8 @@ OrderStatus BinanceExchange::String2OrderStatus(std::string s)
         return OrderStatus::New;
     if (s == "FILLED")
         return OrderStatus::Filled;
-    if (s == "CANCELLED")
-        return OrderStatus::Cancelled;
+    if (s == "CANCELED")
+        return OrderStatus::Canceled;
 
     return OrderStatus::New;
 }
@@ -346,15 +451,43 @@ OrderStatus BinanceExchange::String2OrderStatus(std::string s)
 OrderType BinanceExchange::String2OrderType(std::string s)
 {
     if (s == "TRAILING_STOP_MARKET")
-        return OrderType::StopMarket;
+        return OrderType::StopLosstTakeProfitMarket;
     if (s == "MARKET")
         return OrderType::Market;
     if (s == "LIMIT")
         return OrderType::Limit;
     if (s == "STOP/TAKE_PROFIT")
-        return OrderType::TakeProfit;
+        return OrderType::StopLossTakeProfit;
     if (s == "STOP_MARKET/TAKE_PROFIT_MARKET")
-        return OrderType::TakeProfitMarket;
+        return OrderType::StopLosstTakeProfitMarket;
 
     return OrderType::Limit;
+}
+
+string BinanceExchange::OrderSide2String(Direct direct)
+{
+    switch (direct) {
+    case Direct::Buy:
+        return "BUY";
+    case Direct::Sell:
+        return "SELL";
+    }
+
+    return "BUY";
+}
+
+string BinanceExchange::OrderType2String(OrderType type)
+{
+    switch (type) {
+    case OrderType::Limit:
+        return "LIMIT";
+    case OrderType::Market:
+        return "MARKET";
+    case OrderType::StopLossTakeProfit:
+        return "STOP/TAKE_PROFIT";
+    case OrderType::StopLosstTakeProfitMarket:
+        return "STOP_MARKET/TAKE_PROFIT_MARKET";
+    }
+
+    return "LIMIT";
 }
