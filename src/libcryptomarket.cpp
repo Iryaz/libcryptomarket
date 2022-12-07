@@ -131,6 +131,22 @@ bool CancelOrder(CryptoMarketHandle &h, Order& order)
     return static_cast<ExchangeObj*>(h.ExchangeObj)->CancelOrder(order);
 }
 
+bool GetFuturesMarginOption(CryptoMarketHandle &h, std::string& symbol, FuturesMarginOption& options)
+{
+    if (h.ExchangeName == "binance-futures")
+        return static_cast<BinanceFuturesExchange*>(h.ExchangeObj)->GetMarginOptions(symbol, options);
+
+    return false;
+}
+
+bool SetFuturesMarginOption(CryptoMarketHandle &h, std::string& symbol, FuturesMarginOption &options)
+{
+    if (h.ExchangeName == "binance-futures")
+        return static_cast<BinanceFuturesExchange*>(h.ExchangeObj)->SetMarginOptions(symbol, options);
+
+    return false;
+}
+
 bool Free(CryptoMarketHandle handle)
 {
     ExchangeObj* Ptr = static_cast<ExchangeObj*>(handle.ExchangeObj);

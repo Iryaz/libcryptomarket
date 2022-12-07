@@ -158,6 +158,16 @@ struct Order {
     OrderStatus Status;
 };
 
+enum MarginType {
+    Isolated,
+    Crossed
+};
+
+struct FuturesMarginOption {
+    MarginType Type;
+    double Leverage;
+};
+
 typedef std::list<Depth> MarketDepth;
 typedef std::list<Trade> TradesList;
 typedef std::list<Candle> CandlesList;
@@ -181,6 +191,9 @@ bool GetAccount(CryptoMarketHandle &h, AccountInfo& info);
 bool GetOpenOrders(CryptoMarketHandle &h, OrderList& orders);
 bool NewOrder(CryptoMarketHandle &h, std::string &symbol, OrderType type, Direct direct, double qty, double price, Order& newOrder);
 bool CancelOrder(CryptoMarketHandle &h, Order& order);
+// Futures only
+bool GetFuturesMarginOption(CryptoMarketHandle &h, std::string& symbol, FuturesMarginOption& options);
+bool SetFuturesMarginOption(CryptoMarketHandle &h, std::string& symbol, FuturesMarginOption& options);
 
 bool Free(CryptoMarketHandle handle);
 void Cleanup();
