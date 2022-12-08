@@ -174,7 +174,8 @@ string BinanceExchange::BuildNewOrderUrl(timestamp_t timestamp, const string& sy
         querystring.append("GTC");
     }
 
-    if (type == OrderType::StopLosstTakeProfitMarket) {
+    if (type == OrderType::StopLoss || type == OrderType::TakeProfit ||
+            type == OrderType::StopLossMarket || type == OrderType::TakeProfitMarket) {
         querystring.append("&stopPrice=");
         querystring.append(std::to_string(price));
     }
@@ -450,16 +451,18 @@ OrderStatus BinanceExchange::String2OrderStatus(std::string s)
 
 OrderType BinanceExchange::String2OrderType(std::string s)
 {
-    if (s == "TRAILING_STOP_MARKET")
-        return OrderType::StopLosstTakeProfitMarket;
     if (s == "MARKET")
         return OrderType::Market;
     if (s == "LIMIT")
         return OrderType::Limit;
-    if (s == "STOP/TAKE_PROFIT")
-        return OrderType::StopLossTakeProfit;
-    if (s == "STOP_MARKET/TAKE_PROFIT_MARKET")
-        return OrderType::StopLosstTakeProfitMarket;
+    if (s == "STOP")
+        return OrderType::StopLoss;
+    if (s == "STOP_MARKET")
+        return OrderType::StopLossMarket;
+    if (s == "TAKE_PROFIT")
+        return OrderType::TakeProfit;
+    if (s == "TAKE_PROFIT_MARKET")
+        return OrderType::TakeProfitMarket;
 
     return OrderType::Limit;
 }
@@ -483,10 +486,14 @@ string BinanceExchange::OrderType2String(OrderType type)
         return "LIMIT";
     case OrderType::Market:
         return "MARKET";
-    case OrderType::StopLossTakeProfit:
-        return "STOP/TAKE_PROFIT";
-    case OrderType::StopLosstTakeProfitMarket:
-        return "STOP_MARKET/TAKE_PROFIT_MARKET";
+    case OrderType::StopLoss:
+        return "STOP";
+    case OrderType::StopLossMarket:
+        return "STOP_MARKET";
+    case OrderType::TakeProfitMarket:
+        return "TAKE_PROFIT_MARKET";
+    case OrderType::TakeProfit:
+        return "TAKE_PROFIT";
     }
 
     return "LIMIT";

@@ -136,8 +136,10 @@ struct Candle {
 enum OrderType {
     Limit,
     Market,
-    StopLossTakeProfit,
-    StopLosstTakeProfitMarket,
+    StopLoss,
+    TakeProfit,
+    StopLossMarket,
+    TakeProfitMarket
 };
 
 enum OrderStatus {
