@@ -72,6 +72,23 @@ string BinanceExchange::BuildAggregateTradesUrl(const string symbol, timestamp_t
     return url;
 }
 
+string BinanceExchange::GetListenKeyUrl()
+{
+    return ApiServer_ + ApiType_ + "/v3/userDataStream";
+}
+
+bool BinanceExchange::ParseListenKey(const json::value& value, std::string& key)
+{
+    try {
+        key = value.at("listenKey").as_string().c_str();
+        return true;
+    } catch (std::exception& e) {
+        return false;
+    }
+
+    return false;
+}
+
 string BinanceExchange::BuildCandlesUrl(const string symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit)
 {
     string url = ApiServer_;

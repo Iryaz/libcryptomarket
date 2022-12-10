@@ -69,6 +69,11 @@ string BybitExchange::BuildCancelOrderUrl(timestamp_t timestamp, Order &order)
     return "";
 }
 
+string BybitExchange::GetListenKeyUrl()
+{
+    return "";
+}
+
 timestamp_t BybitExchange::ParseServerTime(const json::value& value)
 {
     try {
@@ -250,6 +255,11 @@ bool BybitExchange::ParseNewOrder(const json::value &value, Order& order)
 }
 
 bool BybitExchange::ParseCancelOrder(const json::value& value)
+{
+    return false;
+}
+
+bool BybitExchange::ParseListenKey(const json::value& value, std::string &key)
 {
     return false;
 }

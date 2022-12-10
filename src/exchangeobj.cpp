@@ -223,6 +223,42 @@ bool ExchangeObj::GetAccount(AccountInfo &info)
     return ret;
 }
 
+bool ExchangeObj::GetListenKey(std::string& key)
+{
+    bool ret = false;
+    InfoMessage("<ExchangeObj::GetListenKey>");
+    if (ApiKey_.size() == 0) {
+        WarningMessage("<ExchangeObj::GetListenKey> API Key and Secret Key has not been set.");
+        return false;
+    }
+
+    string url = GetListenKeyUrl();
+    vector<string> extra_http_header;
+    string header_chunk("X-MBX-APIKEY: ");
+    header_chunk.append(ApiKey_);
+    extra_http_header.push_back(header_chunk);
+
+    InfoMessage((F("<ExchangeObj::GetListenKey> url = |%s|") % url.c_str()).str());
+    string post_data = "";
+
+    string str_result;
+    string action = "POST";
+    GetUrlWithHeader(url, str_result, extra_http_header, post_data, action);
+    if (str_result.size() > 0) {
+        try {
+            JSON_PARSE
+            ret = ParseListenKey(value, key);
+        } catch (std::exception &e) {
+            ErrorMessage((F("<ExchangeObj::GetListenKey> Error ! %s") % e.what()).str());
+        }
+    } else {
+        ErrorMessage("<ExchangeObj::GetListenKey> Failed to get anything.");
+    }
+
+    curl_easy_reset(curl);
+    return ret;
+}
+
 bool ExchangeObj::GetOpenOrders(OrderList& orders)
 {
     bool ret = false;

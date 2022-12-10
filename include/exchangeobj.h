@@ -37,6 +37,7 @@ public:
     bool GetOpenOrders(OrderList& orders);
     bool NewOrder(OrderType type, std::string& symbol, Direct direct, double qty, double price, Order& newOrder);
     bool CancelOrder(Order &order);
+    bool GetListenKey(std::string& key);
 
     void SetLogger(BaseLogger* logger) { Logger_ = logger; }
 
@@ -63,6 +64,7 @@ protected:
     virtual string BuildOpenOrdersUrl(timestamp_t timestamp) = 0;
     virtual string BuildNewOrderUrl(timestamp_t timestamp, const std::string &symbol, OrderType type, Direct direct, double qty, double price) = 0;
     virtual string BuildCancelOrderUrl(timestamp_t timestamp, Order &order) = 0;
+    virtual string GetListenKeyUrl() = 0;
 
     virtual timestamp_t ParseServerTime(const json::value& value) = 0;
     virtual bool ParseSymbols(const json::value& value, std::list<Symbol> &symbols) = 0;
@@ -74,6 +76,7 @@ protected:
     virtual bool ParseOpenOrders(const json::value& value, OrderList& orders) = 0;
     virtual bool ParseNewOrder(const json::value& value, Order& order) = 0;
     virtual bool ParseCancelOrder(const json::value& value) = 0;
+    virtual bool ParseListenKey(const json::value& value, std::string& key) = 0;
 
     virtual string Timeframe2String(TimeFrame tf);
     virtual bool IsError(const json::value &result);

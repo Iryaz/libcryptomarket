@@ -170,6 +170,17 @@ struct FuturesMarginOption {
     double Leverage;
 };
 
+struct Position {
+    MarginType Type;
+    double Leverage;
+    std::string Symbol;
+    Direct side;
+    double MarkPrice;
+    double LiquidationPrice;
+    double UnrealizedProfit;
+    timestamp_t UpdateTime;
+};
+
 typedef std::list<Depth> MarketDepth;
 typedef std::list<Trade> TradesList;
 typedef std::list<Candle> CandlesList;
@@ -196,6 +207,8 @@ bool CancelOrder(CryptoMarketHandle &h, Order& order);
 // Futures only
 bool GetFuturesMarginOption(CryptoMarketHandle &h, std::string& symbol, FuturesMarginOption& options);
 bool SetFuturesMarginOption(CryptoMarketHandle &h, std::string& symbol, FuturesMarginOption& options);
+
+bool GetListenKey(CryptoMarketHandle &h, std::string& key);
 
 bool Free(CryptoMarketHandle handle);
 void Cleanup();

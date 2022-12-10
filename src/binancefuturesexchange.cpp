@@ -264,6 +264,11 @@ bool BinanceFuturesExchange::CheckSetLeverage(const json::value &json)
     return true;
 }
 
+string BinanceFuturesExchange::GetListenKeyUrl()
+{
+    return ApiServer_ + ApiType_ + "/v1/listenKey";
+}
+
 string BinanceFuturesExchange::BuildAccountUrl(timestamp_t timestamp)
 {
     string url = ApiServer_;

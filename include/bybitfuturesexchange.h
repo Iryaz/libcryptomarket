@@ -16,6 +16,7 @@ private:
     virtual string BuildAggregateTradesUrl(const string symbol, timestamp_t start_time, timestamp_t end_time, int limit);
     virtual string BuildCandlesUrl(const string symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit);
     virtual string BuildAccountUrl(timestamp_t timestamp);
+    virtual string GetListenKeyUrl();
 
     virtual bool ParseTicker24(const json::value& value, std::list<Ticker24h>& tickers);
     virtual timestamp_t ParseServerTime(const json::value& value);

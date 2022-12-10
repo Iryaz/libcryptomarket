@@ -25,6 +25,7 @@ private:
     bool ParseSymbols(const json::value &json, std::list<Symbol> &symbols);
     bool CheckSetMarginType(const json::value &json);
     bool CheckSetLeverage(const json::value &json);
+    string GetListenKeyUrl();
 
     bool SetMarginType(timestamp_t time, std::string& symbol, MarginType type);
     bool SetLeverage(timestamp_t time, std::string& symbol, int leverage);

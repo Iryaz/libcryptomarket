@@ -19,6 +19,7 @@ protected:
     virtual string BuildOpenOrdersUrl(timestamp_t timestamp);
     virtual string BuildNewOrderUrl(timestamp_t timestamp, const std::string &symbol, OrderType type, Direct direct, double qty, double price);
     virtual string BuildCancelOrderUrl(timestamp_t timestamp, Order &order);
+    virtual string GetListenKeyUrl();
 
     virtual timestamp_t ParseServerTime(const json::value& value);
     virtual bool ParseSymbols(const json::value& value, std::list<Symbol> &symbols);
@@ -30,6 +31,7 @@ protected:
     virtual bool ParseOpenOrders(const json::value& json, OrderList& orders);
     virtual bool ParseNewOrder(const json::value& value, Order& order);
     virtual bool ParseCancelOrder(const json::value& value);
+    virtual bool ParseListenKey(const json::value& value, std::string& key);
 
     const string GetInterval(TimeFrame tf);
     string ApiServer_;

@@ -147,6 +147,14 @@ bool SetFuturesMarginOption(CryptoMarketHandle &h, std::string& symbol, FuturesM
     return false;
 }
 
+bool GetListenKey(CryptoMarketHandle &h, std::string& key)
+{
+    if (h.ExchangeName.empty())
+        return false;
+
+    return static_cast<ExchangeObj*>(h.ExchangeObj)->GetListenKey(key);
+}
+
 bool Free(CryptoMarketHandle handle)
 {
     ExchangeObj* Ptr = static_cast<ExchangeObj*>(handle.ExchangeObj);

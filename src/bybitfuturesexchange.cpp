@@ -6,6 +6,11 @@ BybitFuturesExchange::BybitFuturesExchange()
 
 }
 
+string BybitFuturesExchange::GetListenKeyUrl()
+{
+    return "";
+}
+
 string BybitFuturesExchange::BuildTimeUrl()
 {
     return ApiServer_ + "/v3/public/time";
