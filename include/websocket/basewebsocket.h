@@ -35,16 +35,20 @@ public:
     void Stop();
     void SetLogger(BaseLogger* logger);
 
-    void SetMarketDepthEvent(libcryptomarket::UpdateMarketDepthEvent event)  { UpdateMarketDepthCallback_ = event;   }
-    void SetAddTradeEvent(libcryptomarket::AddTradeEvent event)              { AddTradeCallback_ = event;            }
-    void SetUpdateCandleEvent(libcryptomarket::UpdateCandleEvent event)      { UpdateCandleCallback_ = event;        }
+    void SetMarketDepthEvent(libcryptomarket::UpdateMarketDepthEvent event) { UpdateMarketDepthCallback_ = event;   }
+    void SetAddTradeEvent(libcryptomarket::AddTradeEvent event)             { AddTradeCallback_ = event;            }
+    void SetUpdateCandleEvent(libcryptomarket::UpdateCandleEvent event)     { UpdateCandleCallback_ = event;        }
+    void SetUpdateBalanceEvent(libcryptomarket::UpdateBalanceEvent event)   { UpdateBalanceCallback_ = event;       }
 
 protected:
     typedef enum {
         UNKNOWN = 0,
         DEPTH_UPDATE = 1,
         AGG_TRADE = 2,
-        KLINE = 3
+        KLINE = 3,
+        MARGIN_CALL = 4,
+        ACCOUNT_UPDATE = 5,
+        ORDER_TRADE_UPDATE = 6
     } DataEventType;
 
     void* Context_;
@@ -59,12 +63,13 @@ protected:
 
     virtual bool StartLoop();
     virtual void ParseJSon(boost::json::value& val) = 0;
-    virtual void Init(int subscribe_flag) = 0;
+    virtual void Init(int subscribe_flag, const std::string& listen_key = "") = 0;
     TimeFrame GetTimeFrame(const std::string& tf);
 
     UpdateMarketDepthEvent UpdateMarketDepthCallback_;
     AddTradeEvent AddTradeCallback_;
     UpdateCandleEvent UpdateCandleCallback_;
+    UpdateBalanceEvent UpdateBalanceCallback_;
 
     void ParseBuffer(beast::flat_buffer buffer);
     bool IsStart_;

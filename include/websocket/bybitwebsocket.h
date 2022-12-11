@@ -9,7 +9,7 @@ public:
     ByBitWebsocket(Type type, const std::string& symbol, int subscribe_flags);
 
 protected:
-    void Init(int flag);
+    void Init(int flag, const std::string& listen_key = "");
     virtual void SetSymbol(const std::string& symbol);
 
     void ParseMarketDepth(const json::value& json);

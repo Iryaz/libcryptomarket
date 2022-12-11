@@ -50,7 +50,7 @@ void ByBitWebsocket::SetSymbol(const std::string& symbol)
     std::transform(Symbol_.begin(), Symbol_.end(), Symbol_.begin(), [](unsigned char c) {return std::toupper(c);});
 }
 
-void ByBitWebsocket::Init(int flag)
+void ByBitWebsocket::Init(int flag, const std::string& listen_key)
 {
     boost::property_tree::ptree pt;
     boost::property_tree::ptree args;

@@ -77,6 +77,11 @@ string BinanceExchange::GetListenKeyUrl()
     return ApiServer_ + ApiType_ + "/v3/userDataStream";
 }
 
+string BinanceExchange::PutListenKeyUrl(const std::string& key)
+{
+    return "";
+}
+
 bool BinanceExchange::ParseListenKey(const json::value& value, std::string& key)
 {
     try {

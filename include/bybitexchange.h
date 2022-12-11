@@ -20,6 +20,7 @@ protected:
     virtual string BuildNewOrderUrl(timestamp_t timestamp, const std::string &symbol, OrderType type, Direct direct, double qty, double price);
     virtual string BuildCancelOrderUrl(timestamp_t timestamp, Order &order);
     virtual string GetListenKeyUrl();
+    virtual string PutListenKeyUrl(const std::string& key);
 
     virtual timestamp_t ParseServerTime(const json::value& value);
     virtual bool ParseSymbols(const json::value& value, std::list<Symbol> &symbols);

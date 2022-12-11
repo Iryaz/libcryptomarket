@@ -6,7 +6,7 @@
 
 #define F(S) boost::format(S)
 
-BinanceWebSocket::BinanceWebSocket(Type type, const std::string& symbol, int subscribe_flags) :
+BinanceWebSocket::BinanceWebSocket(Type type, const std::string& symbol, int subscribe_flags, const std::string& listen_key) :
     BaseWebSocket(type, symbol, subscribe_flags)
 {
     LastUpdateId_ = -1;
@@ -14,14 +14,20 @@ BinanceWebSocket::BinanceWebSocket(Type type, const std::string& symbol, int sub
     switch (Type_) {
     case Spot: {
         BaseWebSocket::SetWebSocketPort(9443);
-        SetHost("stream.binance.com");
+        if (listen_key.empty())
+            SetHost("stream.binance.com");
+        else
+            SetHost("stream-auth.binance.com");
         Exchange_ = "binance";
-        SetPath("/ws/");
+        SetPath("/stream?streams=");
         BinanceObj_ = new BinanceExchange();
     } break;
     case Futures: {
         BaseWebSocket::SetWebSocketPort(443);
-        SetHost("fstream.binance.com");
+        if (listen_key.empty())
+            SetHost("fstream.binance.com");
+        else
+            SetHost("fstream-auth.binance.com");
         Exchange_ = "binance-futures";
         SetPath("/stream?streams=");
         BinanceObj_ = new BinanceFuturesExchange();
@@ -30,7 +36,7 @@ BinanceWebSocket::BinanceWebSocket(Type type, const std::string& symbol, int sub
         break;
     }
 
-    Init(GetSubscribeFlags());
+    Init(GetSubscribeFlags(), listen_key);
     BinanceObj_->Init("", "");
 }
 
@@ -53,11 +59,10 @@ bool BinanceWebSocket::StartLoop()
     return BaseWebSocket::StartLoop();
 }
 
-void BinanceWebSocket::Init(int flag)
+void BinanceWebSocket::Init(int flag, const std::string& listen_key)
 {
     if (flag & MARKET_DEPTH_SUBSCRIBE)
         PathParams_ += GetSymbol() + "@depth@100ms" + "/";
-
     if (flag & TRADES_SUBSCRIBE)
         PathParams_ += GetSymbol() + "@aggTrade" + "/";
     if (flag & CANDLES_SUBSCRIBE_1m)
@@ -73,7 +78,13 @@ void BinanceWebSocket::Init(int flag)
     if (flag & CANDLES_SUBSCRIBE_1d)
         PathParams_ += GetSymbol() + "@kline_1d" + "/";
 
+    //if (!listen_key.empty())
+    //    PathParams_ += listen_key + "/";
+
     PathParams_.pop_back();
+    if (!listen_key.empty())
+        PathParams_ += "&listenKey=" + listen_key;
+
     SetPath(Path_ + PathParams_);
 }
 
@@ -111,6 +122,15 @@ void BinanceWebSocket::ParseDataSpot(boost::json::value& result)
         case KLINE:
             ParseKLines(result);
             break;
+        case MARGIN_CALL:
+            ParseMarginCall(result);
+            break;
+        case ACCOUNT_UPDATE:
+            ParseAccountUpdate(result);
+            break;
+        case ORDER_TRADE_UPDATE:
+            ParseOrderTrade(result);
+            break;
         }
     } catch (std::exception& e) {
         ErrorMessage((F("<BinanceWebSocket::ParseDataSpot> Error parsing json: %s") % e.what()).str());
@@ -134,6 +154,15 @@ void BinanceWebSocket::ParseDataFutures(boost::json::value& result)
         case KLINE:
             ParseKLines(obj);
             break;
+        case MARGIN_CALL:
+            ParseMarginCall(obj);
+            break;
+        case ACCOUNT_UPDATE:
+            ParseAccountUpdate(obj);
+            break;
+        case ORDER_TRADE_UPDATE:
+            ParseOrderTrade(obj);
+            break;
         }
     } catch (std::exception& e) {
         ErrorMessage((F("<BinanceWebSocket::ParseDataFutures> Error parsing json: %s") % e.what()).str());
@@ -148,6 +177,12 @@ BaseWebSocket::DataEventType BinanceWebSocket::String2EventType(const std::strin
         return AGG_TRADE;
     if (s == "kline")
         return KLINE;
+    if (s == "MARGIN_CALL")
+        return MARGIN_CALL;
+    if (s == "ACCOUNT_UPDATE")
+        return ACCOUNT_UPDATE;
+    if (s == "ORDER_TRADE_UPDATE")
+        return ORDER_TRADE_UPDATE;
 
     return UNKNOWN;
 }
@@ -242,4 +277,36 @@ void BinanceWebSocket::ParseKLines(const json::value &json)
     } catch (std::exception& e) {
         ErrorMessage((F("<BinanceWebSocket::ParseKLines> Error parse candles: %s") % e.what()).str());
     }
+}
+
+void BinanceWebSocket::ParseMarginCall(const json::value& json)
+{
+
+}
+
+void BinanceWebSocket::ParseAccountUpdate(const json::value& json)
+{
+    try {
+        Balances balances;
+        auto& obj = json.at("a").as_object();
+        auto& B = obj.at("B").as_array();
+        for (auto& b : B) {
+            Balance balance;
+            balance.Asset = b.at("a").as_string().c_str();
+            balance.Free = atof(b.at("wb").as_string().c_str());
+            balance.Locked = balance.Free - atof(b.at("wc").as_string().c_str());
+            balances.push_back(balance);
+        }
+
+        if (UpdateBalanceCallback_ != nullptr)
+            UpdateBalanceCallback_(Context_, Exchange_, Symbol_, balances);
+
+    } catch (std::exception& e) {
+        ErrorMessage((F("<BinanceWebSocket::ParseAccountUpdate> Error parse Account: %s") % e.what()).str());
+    }
+}
+
+void BinanceWebSocket::ParseOrderTrade(const json::value& json)
+{
+
 }

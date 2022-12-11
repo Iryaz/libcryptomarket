@@ -74,6 +74,11 @@ string BybitExchange::GetListenKeyUrl()
     return "";
 }
 
+string BybitExchange::PutListenKeyUrl(const std::string& key)
+{
+    return "";
+}
+
 timestamp_t BybitExchange::ParseServerTime(const json::value& value)
 {
     try {

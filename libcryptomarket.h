@@ -204,11 +204,15 @@ bool GetAccount(CryptoMarketHandle &h, AccountInfo& info);
 bool GetOpenOrders(CryptoMarketHandle &h, OrderList& orders);
 bool NewOrder(CryptoMarketHandle &h, std::string &symbol, OrderType type, Direct direct, double qty, double price, Order& newOrder);
 bool CancelOrder(CryptoMarketHandle &h, Order& order);
+bool GetCurrentPosition(CryptoMarketHandle &h, const std::string &symbol, std::list<Position>& pos);
+
 // Futures only
 bool GetFuturesMarginOption(CryptoMarketHandle &h, std::string& symbol, FuturesMarginOption& options);
 bool SetFuturesMarginOption(CryptoMarketHandle &h, std::string& symbol, FuturesMarginOption& options);
 
 bool GetListenKey(CryptoMarketHandle &h, std::string& key);
+bool PutListenKey(CryptoMarketHandle &h, const std::string& key);
+bool CloseListenKey(CryptoMarketHandle &h, const std::string& key);
 
 bool Free(CryptoMarketHandle handle);
 void Cleanup();
@@ -230,8 +234,9 @@ typedef void* WebSocketObj;
 typedef void (*UpdateMarketDepthEvent)(void*, const std::string&, const std::string&, MarketDepth& asks, MarketDepth& bids);
 typedef void (*AddTradeEvent)(void*, const std::string&, const std::string&, Trade& trade);
 typedef void (*UpdateCandleEvent)(void*, const std::string&, const std::string&, TimeFrame tf, Candle& candle);
+typedef void (*UpdateBalanceEvent)(void*, const std::string&, const std::string&, Balances balances);
 
-WebSocketObj CreateWebSocketObj(const std::string& exchange, const std::string& symbol, int subscribe_flags = ALL_SUBSCRIBE);
+WebSocketObj CreateWebSocketObj(const std::string& exchange, const std::string& symbol, int subscribe_flags = ALL_SUBSCRIBE, const std::string& listen_key = "");
 bool SetWebSocketLogger(WebSocketObj ws, BaseLogger* logger);
 bool SetWebSocketContext(WebSocketObj ws, void *context);
 void StartWebSocket(WebSocketObj ws);
@@ -239,6 +244,7 @@ void StopWebSocket(WebSocketObj ws);
 bool SetWebSocketUpdateMarketDepthCallback(WebSocketObj ws, UpdateMarketDepthEvent event);
 bool SetWebSocketAddTradeCallback(WebSocketObj ws, AddTradeEvent event);
 bool SetWebSocketUpdateCandleCallback(WebSocketObj ws, UpdateCandleEvent);
+bool SetWebSocketUpdateBalanceCallback(WebSocketObj ws, UpdateBalanceEvent event);
 bool DeleteWebSocket(WebSocketObj ws);
 
 };

@@ -7,15 +7,18 @@
 class BinanceWebSocket : public BaseWebSocket
 {
 public:
-    BinanceWebSocket(Type type, const std::string& symbol, int subscribe_flags);
+    BinanceWebSocket(Type type, const std::string& symbol, int subscribe_flags, const std::string &listen_key);
     ~BinanceWebSocket();
 
 protected:
     void SetSymbol(const std::string& symbol);
-    void Init(int flag);
+    void Init(int flag, const std::string &listen_key);
     void ParseMarketDepth(const json::value& json);
     void ParseTrades(const json::value& json);
     void ParseKLines(const json::value& json);
+    void ParseMarginCall(const json::value& json);
+    void ParseAccountUpdate(const json::value& json);
+    void ParseOrderTrade(const json::value& json);
     virtual bool StartLoop();
 
 private:

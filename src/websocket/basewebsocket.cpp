@@ -32,6 +32,7 @@ BaseWebSocket::BaseWebSocket(Type type, const std::string& symbol, int subscribe
     UpdateMarketDepthCallback_ = nullptr;
     AddTradeCallback_ = nullptr;
     UpdateCandleCallback_ = nullptr;
+    UpdateBalanceCallback_ = nullptr;
 }
 
 BaseWebSocket::~BaseWebSocket()

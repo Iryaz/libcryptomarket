@@ -131,6 +131,14 @@ bool CancelOrder(CryptoMarketHandle &h, Order& order)
     return static_cast<ExchangeObj*>(h.ExchangeObj)->CancelOrder(order);
 }
 
+bool GetCurrentPosition(CryptoMarketHandle &h, const std::string& symbol, std::list<Position>& pos)
+{
+    if (h.ExchangeName == "binance-futures")
+        return static_cast<BinanceFuturesExchange*>(h.ExchangeObj)->GetCurrentPosition(symbol, pos);
+
+    return false;
+}
+
 bool GetFuturesMarginOption(CryptoMarketHandle &h, std::string& symbol, FuturesMarginOption& options)
 {
     if (h.ExchangeName == "binance-futures")
@@ -155,6 +163,22 @@ bool GetListenKey(CryptoMarketHandle &h, std::string& key)
     return static_cast<ExchangeObj*>(h.ExchangeObj)->GetListenKey(key);
 }
 
+bool PutListenKey(CryptoMarketHandle &h, const std::string& key)
+{
+    if (h.ExchangeName.empty())
+        return false;
+
+    return static_cast<ExchangeObj*>(h.ExchangeObj)->PutListenKey(key);
+}
+
+bool CloseListenKey(CryptoMarketHandle &h, const std::string& key)
+{
+    if (h.ExchangeName.empty())
+        return false;
+
+    return static_cast<ExchangeObj*>(h.ExchangeObj)->CloseListenKey(key);
+}
+
 bool Free(CryptoMarketHandle handle)
 {
     ExchangeObj* Ptr = static_cast<ExchangeObj*>(handle.ExchangeObj);
@@ -173,13 +197,13 @@ void Cleanup()
     Objects.clear();
 }
 
-WebSocketObj CreateWebSocketObj(const std::string& exchange, const std::string& symbol, int subscribe_flags)
+WebSocketObj CreateWebSocketObj(const std::string& exchange, const std::string& symbol, int subscribe_flags, const std::string &listen_key)
 {
     if (exchange == "binance")
-        return new BinanceWebSocket(BaseWebSocket::Spot, symbol, subscribe_flags);
+        return new BinanceWebSocket(BaseWebSocket::Spot, symbol, subscribe_flags, listen_key);
 
     if (exchange == "binance-futures")
-        return new BinanceWebSocket(BaseWebSocket::Futures, symbol, subscribe_flags);
+        return new BinanceWebSocket(BaseWebSocket::Futures, symbol, subscribe_flags, listen_key);
 
     if (exchange == "bybit")
         return new ByBitWebsocket(BaseWebSocket::Spot, symbol, subscribe_flags);
@@ -235,6 +259,14 @@ bool SetWebSocketUpdateCandleCallback(WebSocketObj ws, UpdateCandleEvent event)
     if (ws == nullptr)
         return false;
     static_cast<BaseWebSocket *>(ws)->SetUpdateCandleEvent(event);
+    return true;
+}
+
+bool SetWebSocketUpdateBalanceCallback(WebSocketObj ws, UpdateBalanceEvent event)
+{
+    if (ws == nullptr)
+        return false;
+    static_cast<BaseWebSocket *>(ws)->SetUpdateBalanceEvent(event);
     return true;
 }
 

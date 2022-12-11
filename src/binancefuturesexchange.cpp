@@ -217,6 +217,78 @@ bool BinanceFuturesExchange::GetMarginOptions(std::string& symbol, FuturesMargin
     return ret;
 }
 
+bool BinanceFuturesExchange::GetCurrentPosition(const std::string &symbol, std::list<Position>& pos)
+{
+    bool ret = false;
+    InfoMessage("<BinanceFuturesExchange::GetCurrentPosition>");
+    if (ApiKey_.size() == 0 || SecretKey_.size() == 0) {
+        WarningMessage("<BinanceFuturesExchange::GetCurrentPosition> API Key and Secret Key has not been set.");
+        return false;
+    }
+
+    timestamp_t timestamp = GetServerTime();
+    string url = BuildGetPositionUrl(timestamp, symbol);
+    vector<string> extra_http_header;
+    string header_chunk("X-MBX-APIKEY: ");
+    header_chunk.append(ApiKey_);
+    extra_http_header.push_back(header_chunk);
+
+    InfoMessage((boost::format("<BinanceFuturesExchange::GetCurrentPosition> url = |%s|") % url.c_str()).str());
+    string post_data = "";
+
+    string str_result;
+    string action = "GET";
+    GetUrlWithHeader(url, str_result, extra_http_header, post_data, action);
+    if (str_result.size() > 0) {
+        try {
+            boost::json::stream_parser parser;
+            parser.write(str_result);
+            auto value = parser.release();
+            if (IsError(value)) {
+                curl_easy_reset(curl);
+                return false;
+            }
+            ret = ParseCurrentPosition(value, pos);
+        } catch (std::exception &e) {
+            ErrorMessage((boost::format("<BinanceFuturesExchange::GetCurrentPosition> Error ! %s") % e.what()).str());
+        }
+    } else {
+        ErrorMessage("<BinanceFuturesExchange::GetCurrentPosition> Failed to get anything.");
+    }
+
+    curl_easy_reset(curl);
+    return ret;
+}
+
+bool BinanceFuturesExchange::ParseCurrentPosition(const json::value& value, std::list<Position>& pos)
+{
+    try {
+        auto& array = value.as_array();
+        pos.clear();
+        for (auto& p : array) {
+            Position position;
+            position.Leverage = atof(p.at("leverage").as_string().c_str());
+            position.LiquidationPrice = atof(p.at("liquidationPrice").as_string().c_str());
+            position.MarkPrice = atof(p.at("markPrice").as_string().c_str());
+            position.Symbol = p.at("symbol").as_string().c_str();
+            if (p.at("marginType").as_string() == "isolated")
+                position.Type = MarginType::Isolated;
+            else
+                position.Type = MarginType::Crossed;
+
+            position.UnrealizedProfit = atof(p.at("unRealizedProfit").as_string().c_str());
+            position.UpdateTime = p.at("updateTime").to_number<timestamp_t>();
+            position.side = String2OrderSide(p.at("positionSide").as_string().c_str());
+            pos.push_back(position);
+        }
+    } catch (std::exception& e) {
+        return false;
+    }
+
+    return true;
+}
+
+
 bool BinanceFuturesExchange::ParseAccount(const json::value &json, AccountInfo &info)
 {
     info.Balance.clear();
@@ -267,6 +339,12 @@ bool BinanceFuturesExchange::CheckSetLeverage(const json::value &json)
 string BinanceFuturesExchange::GetListenKeyUrl()
 {
     return ApiServer_ + ApiType_ + "/v1/listenKey";
+    //return ApiServer_ + ApiType_ + "/v3/userDataStream";
+}
+
+string BinanceFuturesExchange::PutListenKeyUrl(const std::string& key)
+{
+    return ApiServer_ + ApiType_ + "/v1/listenKey";
 }
 
 string BinanceFuturesExchange::BuildAccountUrl(timestamp_t timestamp)
@@ -281,6 +359,31 @@ string BinanceFuturesExchange::BuildAccountUrl(timestamp_t timestamp)
         querystring.append("&recvWindow=");
         querystring.append(std::to_string(RecvWindow_));
     }
+
+    string signature =  hmac_sha256(SecretKey_.c_str(), querystring.c_str());
+    querystring.append("&signature=");
+    querystring.append(signature);
+
+    url.append(querystring);
+
+    return url;
+}
+
+string BinanceFuturesExchange::BuildGetPositionUrl(timestamp_t timestamp, const std::string& symbol)
+{
+    string url = ApiServer_;
+    url += ApiType_ + "/v2/positionRisk?";
+
+    string querystring("timestamp=");
+    querystring.append(std::to_string(timestamp));
+
+    if (RecvWindow_ > 0) {
+        querystring.append("&recvWindow=");
+        querystring.append(std::to_string(RecvWindow_));
+    }
+
+    querystring.append("&symbol=");
+    querystring.append(symbol);
 
     string signature =  hmac_sha256(SecretKey_.c_str(), querystring.c_str());
     querystring.append("&signature=");

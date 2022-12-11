@@ -259,6 +259,78 @@ bool ExchangeObj::GetListenKey(std::string& key)
     return ret;
 }
 
+bool ExchangeObj::PutListenKey(const std::string& key)
+{
+    bool ret = false;
+    InfoMessage("<ExchangeObj::PutListenKey>");
+    if (ApiKey_.size() == 0) {
+        WarningMessage("<ExchangeObj::PutListenKey> API Key and Secret Key has not been set.");
+        return false;
+    }
+
+    string url = PutListenKeyUrl(key);
+    vector<string> extra_http_header;
+    string header_chunk("X-MBX-APIKEY: ");
+    header_chunk.append(ApiKey_);
+    extra_http_header.push_back(header_chunk);
+
+    InfoMessage((F("<ExchangeObj::PutListenKey> url = |%s|") % url.c_str()).str());
+    string post_data = "";
+
+    string str_result;
+    string action = "PUT";
+    GetUrlWithHeader(url, str_result, extra_http_header, post_data, action);
+    if (str_result.size() > 0) {
+        try {
+            JSON_PARSE
+            ret = true;
+        } catch (std::exception &e) {
+            ErrorMessage((F("<ExchangeObj::PutListenKey> Error ! %s") % e.what()).str());
+        }
+    } else {
+        ErrorMessage("<ExchangeObj::PutListenKey> Failed to get anything.");
+    }
+
+    curl_easy_reset(curl);
+    return ret;
+}
+
+bool ExchangeObj::CloseListenKey(const std::string& key)
+{
+    bool ret = false;
+    InfoMessage("<ExchangeObj::CloseListenKey>");
+    if (ApiKey_.size() == 0) {
+        WarningMessage("<ExchangeObj::CloseListenKey> API Key and Secret Key has not been set.");
+        return false;
+    }
+
+    string url = PutListenKeyUrl(key);
+    vector<string> extra_http_header;
+    string header_chunk("X-MBX-APIKEY: ");
+    header_chunk.append(ApiKey_);
+    extra_http_header.push_back(header_chunk);
+
+    InfoMessage((F("<ExchangeObj::CloseListenKey> url = |%s|") % url.c_str()).str());
+    string post_data = "";
+
+    string str_result;
+    string action = "DELETE";
+    GetUrlWithHeader(url, str_result, extra_http_header, post_data, action);
+    if (str_result.size() > 0) {
+        try {
+            JSON_PARSE
+            ret = true;
+        } catch (std::exception &e) {
+            ErrorMessage((F("<ExchangeObj::CloseListenKey> Error ! %s") % e.what()).str());
+        }
+    } else {
+        ErrorMessage("<ExchangeObj::CloseListenKey> Failed to get anything.");
+    }
+
+    curl_easy_reset(curl);
+    return ret;
+}
+
 bool ExchangeObj::GetOpenOrders(OrderList& orders)
 {
     bool ret = false;
