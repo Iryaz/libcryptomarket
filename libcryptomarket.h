@@ -234,7 +234,7 @@ typedef void* WebSocketObj;
 typedef void (*UpdateMarketDepthEvent)(void*, const std::string&, const std::string&, MarketDepth& asks, MarketDepth& bids);
 typedef void (*AddTradeEvent)(void*, const std::string&, const std::string&, Trade& trade);
 typedef void (*UpdateCandleEvent)(void*, const std::string&, const std::string&, TimeFrame tf, Candle& candle);
-typedef void (*UpdateBalanceEvent)(void*, const std::string&, const std::string&, Balances balances);
+typedef void (*UpdateBalanceEvent)(void*, const std::string&, const std::string&, Balances& balances);
 
 WebSocketObj CreateWebSocketObj(const std::string& exchange, const std::string& symbol, int subscribe_flags = ALL_SUBSCRIBE, const std::string& listen_key = "");
 bool SetWebSocketLogger(WebSocketObj ws, BaseLogger* logger);

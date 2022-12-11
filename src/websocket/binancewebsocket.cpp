@@ -3,6 +3,8 @@
 #include "binancefuturesexchange.h"
 #include <iostream>
 #include "websocket/binancewebsocket.h"
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 #define F(S) boost::format(S)
 
@@ -27,9 +29,9 @@ BinanceWebSocket::BinanceWebSocket(Type type, const std::string& symbol, int sub
         if (listen_key.empty())
             SetHost("fstream.binance.com");
         else
-            SetHost("fstream-auth.binance.com");
+            SetHost("fstream.binance.com");
         Exchange_ = "binance-futures";
-        SetPath("/stream?streams=");
+        SetPath("/stream");
         BinanceObj_ = new BinanceFuturesExchange();
     } break;
     default:
@@ -61,31 +63,63 @@ bool BinanceWebSocket::StartLoop()
 
 void BinanceWebSocket::Init(int flag, const std::string& listen_key)
 {
-    if (flag & MARKET_DEPTH_SUBSCRIBE)
-        PathParams_ += GetSymbol() + "@depth@100ms" + "/";
-    if (flag & TRADES_SUBSCRIBE)
-        PathParams_ += GetSymbol() + "@aggTrade" + "/";
-    if (flag & CANDLES_SUBSCRIBE_1m)
-        PathParams_ += GetSymbol() + "@kline_1m" + "/";
-    if (flag & CANDLES_SUBSCRIBE_5m)
-        PathParams_ += GetSymbol() + "@kline_5m" + "/";
-    if (flag & CANDLES_SUBSCRIBE_15m)
-        PathParams_ += GetSymbol() + "@kline_15m" + "/";
-    if (flag & CANDLES_SUBSCRIBE_1h)
-        PathParams_ += GetSymbol() + "@kline_1h" + "/";
-    if (flag & CANDLES_SUBSCRIBE_4h)
-        PathParams_ += GetSymbol() + "@kline_4h" + "/";
-    if (flag & CANDLES_SUBSCRIBE_1d)
-        PathParams_ += GetSymbol() + "@kline_1d" + "/";
+    boost::property_tree::ptree pt;
+    boost::property_tree::ptree args;
+    boost::property_tree::ptree params;
 
-    //if (!listen_key.empty())
-    //    PathParams_ += listen_key + "/";
+    if (flag & MARKET_DEPTH_SUBSCRIBE) {
+        boost::property_tree::ptree arg;
+        arg.put("", GetSymbol() + "@depth@100ms");
+        params.push_back(std::make_pair("", arg));
+    }
+    if (flag & TRADES_SUBSCRIBE) {
+        boost::property_tree::ptree arg;
+        arg.put("", GetSymbol() + "@aggTrade");
+        params.push_back(std::make_pair("", arg));
+    }
+    if (flag & CANDLES_SUBSCRIBE_1m) {
+        boost::property_tree::ptree arg;
+        arg.put("", GetSymbol() + "@kline_1m");
+        params.push_back(std::make_pair("", arg));
+    }
+    if (flag & CANDLES_SUBSCRIBE_5m) {
+        boost::property_tree::ptree arg;
+        arg.put("", GetSymbol() + "@kline_5m");
+        params.push_back(std::make_pair("", arg));
+    }
+    if (flag & CANDLES_SUBSCRIBE_15m) {
+        boost::property_tree::ptree arg;
+        arg.put("", GetSymbol() + "@kline_15m");
+        params.push_back(std::make_pair("", arg));
+    }
+    if (flag & CANDLES_SUBSCRIBE_1h) {
+        boost::property_tree::ptree arg;
+        arg.put("", GetSymbol() + "@kline_1h");
+        params.push_back(std::make_pair("", arg));
+    }
+    if (flag & CANDLES_SUBSCRIBE_4h) {
+        boost::property_tree::ptree arg;
+        arg.put("", GetSymbol() + "@kline_4h");
+        params.push_back(std::make_pair("", arg));
+    }
+    if (flag & CANDLES_SUBSCRIBE_1d) {
+        boost::property_tree::ptree arg;
+        arg.put("", GetSymbol() + "@kline_1d");
+        params.push_back(std::make_pair("", arg));
+    }
+    if (!listen_key.empty()) {
+        boost::property_tree::ptree arg;
+        arg.put("", listen_key);
+        params.push_back(std::make_pair("", arg));
+    }
 
-    PathParams_.pop_back();
-    if (!listen_key.empty())
-        PathParams_ += "&listenKey=" + listen_key;
+    pt.put("id", 1);
+    pt.put("method", "SUBSCRIBE");
+    pt.add_child("params", params);
 
-    SetPath(Path_ + PathParams_);
+    std::stringstream ss;
+    boost::property_tree::json_parser::write_json(ss, pt);
+    Message_ = ss.str();
 }
 
 void BinanceWebSocket::SetSymbol(const std::string& symbol)
@@ -293,8 +327,9 @@ void BinanceWebSocket::ParseAccountUpdate(const json::value& json)
         for (auto& b : B) {
             Balance balance;
             balance.Asset = b.at("a").as_string().c_str();
-            balance.Free = atof(b.at("wb").as_string().c_str());
-            balance.Locked = balance.Free - atof(b.at("wc").as_string().c_str());
+            double balance_val = atof(b.at("wb").as_string().c_str());
+            balance.Locked = balance_val - atof(b.at("cw").as_string().c_str());
+            balance.Free = atof(b.at("wb").as_string().c_str()) - balance.Locked;
             balances.push_back(balance);
         }
 
