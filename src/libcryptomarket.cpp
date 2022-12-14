@@ -270,6 +270,22 @@ bool SetWebSocketUpdateBalanceCallback(WebSocketObj ws, UpdateBalanceEvent event
     return true;
 }
 
+bool SetWebSocketUpdatePositionCallback(WebSocketObj ws, UpdatePositionEvent event)
+{
+    if (ws == nullptr)
+        return false;
+    static_cast<BaseWebSocket *>(ws)->SetUpdatePositionEvent(event);
+    return true;
+}
+
+bool SetWebSocketUpdateOrderCallback(WebSocketObj ws, UpdateOrderEvent event)
+{
+    if (ws == nullptr)
+        return false;
+    static_cast<BaseWebSocket *>(ws)->SetUpdateOrderEvent(event);
+    return true;
+}
+
 bool DeleteWebSocket(WebSocketObj ws)
 {
     if (ws == nullptr)

@@ -39,6 +39,8 @@ public:
     void SetAddTradeEvent(libcryptomarket::AddTradeEvent event)             { AddTradeCallback_ = event;            }
     void SetUpdateCandleEvent(libcryptomarket::UpdateCandleEvent event)     { UpdateCandleCallback_ = event;        }
     void SetUpdateBalanceEvent(libcryptomarket::UpdateBalanceEvent event)   { UpdateBalanceCallback_ = event;       }
+    void SetUpdatePositionEvent(libcryptomarket::UpdatePositionEvent event) { UpdatePositionCallback_ = event;      }
+    void SetUpdateOrderEvent(libcryptomarket::UpdateOrderEvent event)       { UpdateOrderCallback_ = event;         }
 
 protected:
     typedef enum {
@@ -70,6 +72,8 @@ protected:
     AddTradeEvent AddTradeCallback_;
     UpdateCandleEvent UpdateCandleCallback_;
     UpdateBalanceEvent UpdateBalanceCallback_;
+    UpdatePositionEvent UpdatePositionCallback_;
+    UpdateOrderEvent UpdateOrderCallback_;
 
     void ParseBuffer(beast::flat_buffer buffer);
     bool IsStart_;

@@ -26,6 +26,10 @@ private:
     void ParseDataSpot(boost::json::value& result);
     void ParseDataFutures(boost::json::value& result);
     DataEventType String2EventType(const std::string& s);
+    Direct String2Direct(const std::string& s);
+    OrderStatus String2OrderStatus(std::string s);
+    OrderType String2OrderType(std::string s);
+    MarginType String2MarginType(const std::string& type);
     std::string PathParams_;
     ExchangeObj *BinanceObj_;
     uint64_t LastUpdateId_;

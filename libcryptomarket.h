@@ -99,7 +99,8 @@ enum TimeFrame {
 
 enum Direct {
     Buy = 0,
-    Sell = 1
+    Sell = 1,
+    Both = 2
 };
 
 struct Balance {
@@ -174,7 +175,8 @@ struct Position {
     MarginType Type;
     double Leverage;
     std::string Symbol;
-    Direct side;
+    Direct Side;
+    double Qty;
     double MarkPrice;
     double LiquidationPrice;
     double UnrealizedProfit;
@@ -235,6 +237,8 @@ typedef void (*UpdateMarketDepthEvent)(void*, const std::string&, const std::str
 typedef void (*AddTradeEvent)(void*, const std::string&, const std::string&, Trade& trade);
 typedef void (*UpdateCandleEvent)(void*, const std::string&, const std::string&, TimeFrame tf, Candle& candle);
 typedef void (*UpdateBalanceEvent)(void*, const std::string&, const std::string&, Balances& balances);
+typedef void (*UpdatePositionEvent)(void*, const std::string&, const std::string&, std::list<Position>& position);
+typedef void (*UpdateOrderEvent)(void*, const std::string&, const std::string&, Order& order);
 
 WebSocketObj CreateWebSocketObj(const std::string& exchange, const std::string& symbol, int subscribe_flags = ALL_SUBSCRIBE, const std::string& listen_key = "");
 bool SetWebSocketLogger(WebSocketObj ws, BaseLogger* logger);
@@ -245,6 +249,8 @@ bool SetWebSocketUpdateMarketDepthCallback(WebSocketObj ws, UpdateMarketDepthEve
 bool SetWebSocketAddTradeCallback(WebSocketObj ws, AddTradeEvent event);
 bool SetWebSocketUpdateCandleCallback(WebSocketObj ws, UpdateCandleEvent);
 bool SetWebSocketUpdateBalanceCallback(WebSocketObj ws, UpdateBalanceEvent event);
+bool SetWebSocketUpdatePositionCallback(WebSocketObj ws, UpdatePositionEvent event);
+bool SetWebSocketUpdateOrderCallback(WebSocketObj ws, UpdateOrderEvent event);
 bool DeleteWebSocket(WebSocketObj ws);
 
 };

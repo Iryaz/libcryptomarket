@@ -456,6 +456,9 @@ Direct BinanceExchange::String2OrderSide(std::string s)
     if (s == "SELL")
         return Direct::Sell;
 
+    if (s == "BOTH")
+        return Direct::Both;
+
     return Direct::Buy;
 }
 
@@ -496,6 +499,8 @@ string BinanceExchange::OrderSide2String(Direct direct)
         return "BUY";
     case Direct::Sell:
         return "SELL";
+    case Direct::Both:
+        return "BOTH";
     }
 
     return "BUY";
