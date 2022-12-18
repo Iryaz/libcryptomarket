@@ -41,6 +41,7 @@ public:
     void SetUpdateBalanceEvent(libcryptomarket::UpdateBalanceEvent event)   { UpdateBalanceCallback_ = event;       }
     void SetUpdatePositionEvent(libcryptomarket::UpdatePositionEvent event) { UpdatePositionCallback_ = event;      }
     void SetUpdateOrderEvent(libcryptomarket::UpdateOrderEvent event)       { UpdateOrderCallback_ = event;         }
+    void SetUpdateMarkPrice(libcryptomarket::UpdateMarkPriceEvent event)    { UpdateMarkPriceCallback_ = event;     }
 
 protected:
     typedef enum {
@@ -48,9 +49,10 @@ protected:
         DEPTH_UPDATE = 1,
         AGG_TRADE = 2,
         KLINE = 3,
-        MARGIN_CALL = 4,
-        ACCOUNT_UPDATE = 5,
-        ORDER_TRADE_UPDATE = 6
+        MARK_PRICE = 4,
+        MARGIN_CALL = 5,
+        ACCOUNT_UPDATE = 6,
+        ORDER_TRADE_UPDATE = 7
     } DataEventType;
 
     void* Context_;
@@ -74,6 +76,7 @@ protected:
     UpdateBalanceEvent UpdateBalanceCallback_;
     UpdatePositionEvent UpdatePositionCallback_;
     UpdateOrderEvent UpdateOrderCallback_;
+    UpdateMarkPriceEvent UpdateMarkPriceCallback_;
 
     void ParseBuffer(beast::flat_buffer buffer);
     bool IsStart_;

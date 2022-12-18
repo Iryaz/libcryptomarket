@@ -67,6 +67,12 @@ void BinanceWebSocket::Init(int flag, const std::string& listen_key)
     boost::property_tree::ptree args;
     boost::property_tree::ptree params;
 
+    if (flag & MARK_PRICE_SUBSCRIBE) {
+        boost::property_tree::ptree arg;
+        arg.put("", GetSymbol() + "@markPrice@1s");
+        params.push_back(std::make_pair("", arg));
+    }
+
     if (flag & MARKET_DEPTH_SUBSCRIBE) {
         boost::property_tree::ptree arg;
         arg.put("", GetSymbol() + "@depth@100ms");
@@ -197,6 +203,9 @@ void BinanceWebSocket::ParseDataFutures(boost::json::value& result)
         case ORDER_TRADE_UPDATE:
             ParseOrderTrade(obj);
             break;
+        case MARK_PRICE:
+            ParseMarkPrice(obj);
+            break;
         }
     } catch (std::exception& e) {
         ErrorMessage((F("<BinanceWebSocket::ParseDataFutures> Error parsing json: %s") % e.what()).str());
@@ -205,6 +214,8 @@ void BinanceWebSocket::ParseDataFutures(boost::json::value& result)
 
 BaseWebSocket::DataEventType BinanceWebSocket::String2EventType(const std::string& s)
 {
+    if (s == "markPriceUpdate")
+        return MARK_PRICE;
     if (s == "depthUpdate")
         return DEPTH_UPDATE;
     if (s == "aggTrade")
@@ -408,7 +419,7 @@ void BinanceWebSocket::ParseAccountUpdate(const json::value& json)
         for (auto& p : P) {
             Position position;
             position.Qty = atof(p.at("pa").as_string().c_str());
-            position.MarkPrice = atof(p.at("ep").as_string().c_str());
+            position.EntryPrice = atof(p.at("ep").as_string().c_str());
             position.Symbol = p.at("s").as_string().c_str();
             position.Side = String2Direct(p.at("ps").as_string().c_str());
             position.UnrealizedProfit = atof(p.at("up").as_string().c_str());
@@ -424,51 +435,6 @@ void BinanceWebSocket::ParseAccountUpdate(const json::value& json)
         ErrorMessage((F("<BinanceWebSocket::ParseAccountUpdate> Error parse Account: %s") % e.what()).str());
     }
 }
-
-/*
- *  "e":"ORDER_TRADE_UPDATE",     // Event Type
-  "E":1568879465651,            // Event Time
-  "T":1568879465650,            // Transaction Time
-  "o":{
-    "s":"BTCUSDT",              // Symbol
-    "c":"TEST",                 // Client Order Id
-      // special client order id:
-      // starts with "autoclose-": liquidation order
-      // "adl_autoclose": ADL auto close order
-      // "settlement_autoclose-": settlement order for delisting or delivery
-    "S":"SELL",                 // Side
-    "o":"TRAILING_STOP_MARKET", // Order Type
-    "f":"GTC",                  // Time in Force
-    "q":"0.001",                // Original Quantity
-    "p":"0",                    // Original Price
-    "ap":"0",                   // Average Price
-    "sp":"7103.04",             // Stop Price. Please ignore with TRAILING_STOP_MARKET order
-    "x":"NEW",                  // Execution Type
-    "X":"NEW",                  // Order Status
-    "i":8886774,                // Order Id
-    "l":"0",                    // Order Last Filled Quantity
-    "z":"0",                    // Order Filled Accumulated Quantity
-    "L":"0",                    // Last Filled Price
-    "N":"USDT",             // Commission Asset, will not push if no commission
-    "n":"0",                // Commission, will not push if no commission
-    "T":1568879465650,          // Order Trade Time
-    "t":0,                      // Trade Id
-    "b":"0",                    // Bids Notional
-    "a":"9.91",                 // Ask Notional
-    "m":false,                  // Is this trade the maker side?
-    "R":false,                  // Is this reduce only
-    "wt":"CONTRACT_PRICE",      // Stop Price Working Type
-    "ot":"TRAILING_STOP_MARKET",    // Original Order Type
-    "ps":"LONG",                        // Position Side
-    "cp":false,                     // If Close-All, pushed with conditional order
-    "AP":"7476.89",             // Activation Price, only puhed with TRAILING_STOP_MARKET order
-    "cr":"5.0",                 // Callback Rate, only puhed with TRAILING_STOP_MARKET order
-    "pP": false,              // ignore
-    "si": 0,                  // ignore
-    "ss": 0,                  // ignore
-    "rp":"0"                            // Realized Profit of the trade
-  }
- */
 
 void BinanceWebSocket::ParseOrderTrade(const json::value& json)
 {
@@ -490,5 +456,22 @@ void BinanceWebSocket::ParseOrderTrade(const json::value& json)
 
     } catch (std::exception& e) {
         ErrorMessage((F("<BinanceWebSocket::ParseOrderTrade> Error parse Order: %s") % e.what()).str());
+    }
+}
+
+void BinanceWebSocket::ParseMarkPrice(const json::value& json)
+{
+    try {
+        MarkPrice price;
+        price.MarkPrice = atof(json.at("p").as_string().c_str());
+        price.IndexPrice = atof(json.at("i").as_string().c_str());
+        price.Symbol = json.at("s").as_string().c_str();
+        price.Time = json.at("E").to_number<timestamp_t>();
+
+        if (UpdateMarkPriceCallback_ != nullptr)
+            UpdateMarkPriceCallback_(Context_, Exchange_, Symbol_, price);
+
+    } catch (std::exception& e) {
+        ErrorMessage((F("<BinanceWebSocket::ParseMarkPrice> Error parse Order: %s") % e.what()).str());
     }
 }

@@ -286,6 +286,14 @@ bool SetWebSocketUpdateOrderCallback(WebSocketObj ws, UpdateOrderEvent event)
     return true;
 }
 
+bool SetWebSocketUpdateMarkPriceCallback(WebSocketObj ws, UpdateMarkPriceEvent event)
+{
+    if (ws == nullptr)
+        return false;
+    static_cast<BaseWebSocket *>(ws)->SetUpdateMarkPrice(event);
+    return true;
+}
+
 bool DeleteWebSocket(WebSocketObj ws)
 {
     if (ws == nullptr)

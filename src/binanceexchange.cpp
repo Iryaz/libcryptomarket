@@ -255,8 +255,14 @@ bool BinanceExchange::ParseSymbols(const json::value &json, std::list<Symbol> &s
             s.Quote.Name = i.at("quoteAsset").as_string().c_str();
 
             if (i.at("filters").is_array()) {
-                s.SetPriceStep(std::stod(i.at("filters").at(0).at("tickSize").as_string().c_str()));
-                s.SetQtyStep(std::stod(i.at("filters").at(2).at("stepSize").as_string().c_str()));
+                auto& filters = i.at("filters").as_array();
+                for (auto& f : filters) {
+                    auto type = f.at("filterType").as_string();
+                    if (type == "PRICE_FILTER")
+                        s.SetPriceStep(std::stod(f.at("tickSize").as_string().c_str()));
+                    if (type == "LOT_SIZE")
+                        s.SetQtyStep(std::stod(f.at("stepSize").as_string().c_str()));
+                }
             }
 
             symbols.push_back(s);

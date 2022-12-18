@@ -166,18 +166,33 @@ enum MarginType {
     Crossed
 };
 
+struct MarkPrice {
+    double MarkPrice;
+    double IndexPrice;
+    std::string Symbol;
+    timestamp_t Time;
+};
+
 struct FuturesMarginOption {
     MarginType Type;
     double Leverage;
 };
 
 struct Position {
+    Position() {
+        Qty = 0.0;
+        MarkPrice = 0.0;
+        EntryPrice = 0.0;
+        LiquidationPrice = 0.0;
+        UnrealizedProfit = 0.0;
+    }
     MarginType Type;
     double Leverage;
     std::string Symbol;
     Direct Side;
     double Qty;
     double MarkPrice;
+    double EntryPrice;
     double LiquidationPrice;
     double UnrealizedProfit;
     timestamp_t UpdateTime;
@@ -228,7 +243,8 @@ static const int CANDLES_SUBSCRIBE_15m = 0x10;
 static const int CANDLES_SUBSCRIBE_1h = 0x20;
 static const int CANDLES_SUBSCRIBE_4h = 0x40;
 static const int CANDLES_SUBSCRIBE_1d = 0x80;
-static const int ALL_SUBSCRIBE = MARKET_DEPTH_SUBSCRIBE|TRADES_SUBSCRIBE|
+static const int MARK_PRICE_SUBSCRIBE = 0x100;
+static const int ALL_SUBSCRIBE = MARK_PRICE_SUBSCRIBE|MARKET_DEPTH_SUBSCRIBE|TRADES_SUBSCRIBE|
         CANDLES_SUBSCRIBE_1m|CANDLES_SUBSCRIBE_5m|CANDLES_SUBSCRIBE_15m|
         CANDLES_SUBSCRIBE_1h|CANDLES_SUBSCRIBE_4h|CANDLES_SUBSCRIBE_1d;
 
@@ -239,6 +255,7 @@ typedef void (*UpdateCandleEvent)(void*, const std::string&, const std::string&,
 typedef void (*UpdateBalanceEvent)(void*, const std::string&, const std::string&, Balances& balances);
 typedef void (*UpdatePositionEvent)(void*, const std::string&, const std::string&, std::list<Position>& position);
 typedef void (*UpdateOrderEvent)(void*, const std::string&, const std::string&, Order& order);
+typedef void (*UpdateMarkPriceEvent)(void*, const std::string&, const std::string&, MarkPrice& price);
 
 WebSocketObj CreateWebSocketObj(const std::string& exchange, const std::string& symbol, int subscribe_flags = ALL_SUBSCRIBE, const std::string& listen_key = "");
 bool SetWebSocketLogger(WebSocketObj ws, BaseLogger* logger);
@@ -251,6 +268,7 @@ bool SetWebSocketUpdateCandleCallback(WebSocketObj ws, UpdateCandleEvent);
 bool SetWebSocketUpdateBalanceCallback(WebSocketObj ws, UpdateBalanceEvent event);
 bool SetWebSocketUpdatePositionCallback(WebSocketObj ws, UpdatePositionEvent event);
 bool SetWebSocketUpdateOrderCallback(WebSocketObj ws, UpdateOrderEvent event);
+bool SetWebSocketUpdateMarkPriceCallback(WebSocketObj ws, UpdateMarkPriceEvent event);
 bool DeleteWebSocket(WebSocketObj ws);
 
 };

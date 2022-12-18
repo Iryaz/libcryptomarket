@@ -19,6 +19,7 @@ protected:
     void ParseMarginCall(const json::value& json);
     void ParseAccountUpdate(const json::value& json);
     void ParseOrderTrade(const json::value& json);
+    void ParseMarkPrice(const json::value& json);
     virtual bool StartLoop();
 
 private:

@@ -267,6 +267,7 @@ bool BinanceFuturesExchange::ParseCurrentPosition(const json::value& value, std:
         pos.clear();
         for (auto& p : array) {
             Position position;
+            position.EntryPrice = atof(p.at("entryPrice").as_string().c_str());
             position.Leverage = atof(p.at("leverage").as_string().c_str());
             position.LiquidationPrice = atof(p.at("liquidationPrice").as_string().c_str());
             position.MarkPrice = atof(p.at("markPrice").as_string().c_str());
@@ -279,6 +280,7 @@ bool BinanceFuturesExchange::ParseCurrentPosition(const json::value& value, std:
             position.UnrealizedProfit = atof(p.at("unRealizedProfit").as_string().c_str());
             position.UpdateTime = p.at("updateTime").to_number<timestamp_t>();
             position.Side = String2OrderSide(p.at("positionSide").as_string().c_str());
+            position.Qty = atof(p.at("positionAmt").as_string().c_str());
             pos.push_back(position);
         }
     } catch (std::exception& e) {
