@@ -59,7 +59,7 @@ string BybitExchange::BuildOpenOrdersUrl(timestamp_t timestamp)
     return "";
 }
 
-string BybitExchange::BuildNewOrderUrl(timestamp_t timestamp, const std::string &symbol, OrderType type, Direct direct, double qty, double price)
+string BybitExchange::BuildNewOrderUrl(timestamp_t timestamp, const std::string &symbol, OrderType type, Direct direct, double qty, double price, double stopPrice)
 {
     return "";
 }

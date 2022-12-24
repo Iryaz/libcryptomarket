@@ -368,7 +368,7 @@ bool ExchangeObj::GetOpenOrders(OrderList& orders)
     return ret;
 }
 
-bool ExchangeObj::NewOrder(OrderType type, std::string& symbol, Direct direct, double qty, double price, Order& newOrder)
+bool ExchangeObj::NewOrder(OrderType type, std::string& symbol, Direct direct, double qty, double price, double stopPrice, Order& newOrder)
 {
     bool ret = false;
     InfoMessage("<ExchangeObj::NewOrder>");
@@ -378,7 +378,7 @@ bool ExchangeObj::NewOrder(OrderType type, std::string& symbol, Direct direct, d
     }
 
     timestamp_t timestamp = GetServerTime();
-    string url = BuildNewOrderUrl(timestamp, symbol, type, direct, qty, price);
+    string url = BuildNewOrderUrl(timestamp, symbol, type, direct, qty, price, stopPrice);
     vector<string> extra_http_header;
     string header_chunk("X-MBX-APIKEY: ");
     header_chunk.append(ApiKey_);

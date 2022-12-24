@@ -447,6 +447,7 @@ void BinanceWebSocket::ParseOrderTrade(const json::value& json)
         order.Symbol = obj.at("s").as_string().c_str();
         order.Side = String2Direct(obj.at("S").as_string().c_str());
         order.Price = atof(obj.at("p").as_string().c_str());
+        order.StopPrice = atof(obj.at("sp").as_string().c_str());
         order.Qty = atof(obj.at("q").as_string().c_str());
         order.Status = String2OrderStatus(obj.at("X").as_string().c_str());
         order.Time = obj.at("T").to_number<timestamp_t>();

@@ -121,9 +121,9 @@ bool GetOpenOrders(CryptoMarketHandle &h, OrderList& orders)
     return static_cast<ExchangeObj*>(h.ExchangeObj)->GetOpenOrders(orders);
 }
 
-bool NewOrder(CryptoMarketHandle &h, std::string& symbol, OrderType type, Direct direct, double qty, double price, Order& newOrder)
+bool NewOrder(CryptoMarketHandle &h, std::string& symbol, OrderType type, Direct direct, double qty, double price, double stopPrice, Order& newOrder)
 {
-    return static_cast<ExchangeObj*>(h.ExchangeObj)->NewOrder(type, symbol, direct, qty, price, newOrder);
+    return static_cast<ExchangeObj*>(h.ExchangeObj)->NewOrder(type, symbol, direct, qty, price, stopPrice, newOrder);
 }
 
 bool CancelOrder(CryptoMarketHandle &h, Order& order)

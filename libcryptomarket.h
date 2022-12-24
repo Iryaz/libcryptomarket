@@ -154,6 +154,7 @@ struct Order {
     std::string Symbol;
     double Qty;
     double Price;
+    double StopPrice;
     timestamp_t Time;
     timestamp_t UpdateTime;
     unsigned long long Id;
@@ -219,7 +220,7 @@ bool GetTrades(CryptoMarketHandle &h, const string& symbol, timestamp_t start_ti
 bool GetCandles(CryptoMarketHandle &h, const string& symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit, CandlesList& candles);
 bool GetAccount(CryptoMarketHandle &h, AccountInfo& info);
 bool GetOpenOrders(CryptoMarketHandle &h, OrderList& orders);
-bool NewOrder(CryptoMarketHandle &h, std::string &symbol, OrderType type, Direct direct, double qty, double price, Order& newOrder);
+bool NewOrder(CryptoMarketHandle &h, std::string &symbol, OrderType type, Direct direct, double qty, double price, double stopPrice, Order& newOrder);
 bool CancelOrder(CryptoMarketHandle &h, Order& order);
 bool GetCurrentPosition(CryptoMarketHandle &h, const std::string &symbol, std::list<Position>& pos);
 

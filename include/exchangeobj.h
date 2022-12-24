@@ -35,7 +35,7 @@ public:
     bool GetCandles(const string& symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit, CandlesList& candles);
     bool GetAccount(AccountInfo& info);
     bool GetOpenOrders(OrderList& orders);
-    bool NewOrder(OrderType type, std::string& symbol, Direct direct, double qty, double price, Order& newOrder);
+    bool NewOrder(OrderType type, std::string& symbol, Direct direct, double qty, double price, double stopPrice, Order& newOrder);
     bool CancelOrder(Order &order);
     bool GetListenKey(std::string& key);
     bool PutListenKey(const std::string& key);
@@ -64,7 +64,7 @@ protected:
     virtual string BuildCandlesUrl(const string symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit) = 0;
     virtual string BuildAccountUrl(timestamp_t timestamp) = 0;
     virtual string BuildOpenOrdersUrl(timestamp_t timestamp) = 0;
-    virtual string BuildNewOrderUrl(timestamp_t timestamp, const std::string &symbol, OrderType type, Direct direct, double qty, double price) = 0;
+    virtual string BuildNewOrderUrl(timestamp_t timestamp, const std::string &symbol, OrderType type, Direct direct, double qty, double price, double stopPrice) = 0;
     virtual string BuildCancelOrderUrl(timestamp_t timestamp, Order &order) = 0;
     virtual string GetListenKeyUrl() = 0;
     virtual string PutListenKeyUrl(const std::string& key) = 0;

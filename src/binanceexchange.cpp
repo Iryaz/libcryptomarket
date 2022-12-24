@@ -164,7 +164,7 @@ string BinanceExchange::BuildOpenOrdersUrl(timestamp_t timestamp)
     return url;
 }
 
-string BinanceExchange::BuildNewOrderUrl(timestamp_t timestamp, const string& symbol, OrderType type, Direct direct, double qty, double price)
+string BinanceExchange::BuildNewOrderUrl(timestamp_t timestamp, const string& symbol, OrderType type, Direct direct, double qty, double price, double stopPrice)
 {
     string url = ApiServer_;
     url += ApiType_ + "/v1/order?";
@@ -189,7 +189,7 @@ string BinanceExchange::BuildNewOrderUrl(timestamp_t timestamp, const string& sy
     querystring.append("&quantity=");
     querystring.append(std::to_string(qty));
 
-    if (type == OrderType::Limit) {
+    if (type == OrderType::Limit || type == OrderType::StopLoss || type == OrderType::TakeProfit) {
         querystring.append("&price=");
         querystring.append(std::to_string(price));
         querystring.append("&timeInForce=");
@@ -199,7 +199,7 @@ string BinanceExchange::BuildNewOrderUrl(timestamp_t timestamp, const string& sy
     if (type == OrderType::StopLoss || type == OrderType::TakeProfit ||
             type == OrderType::StopLossMarket || type == OrderType::TakeProfitMarket) {
         querystring.append("&stopPrice=");
-        querystring.append(std::to_string(price));
+        querystring.append(std::to_string(stopPrice));
     }
 
     string signature =  hmac_sha256(SecretKey_.c_str(), querystring.c_str());
@@ -428,6 +428,7 @@ bool BinanceExchange::ParseNewOrder(const json::value &value, Order& order)
     try {
         order.Id = value.at("orderId").to_number<uint64_t>();
         order.Price = atof(value.at("price").as_string().c_str());
+        order.StopPrice = atof(value.at("stopPrice").as_string().c_str());
         order.Qty = atof(value.at("origQty").as_string().c_str());
         order.Side = String2OrderSide(value.at("side").as_string().c_str());
         order.Symbol = value.at("symbol").as_string().c_str();

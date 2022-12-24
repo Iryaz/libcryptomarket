@@ -44,7 +44,7 @@ private:
     virtual string BuildCandlesUrl(const string symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit);
     virtual string BuildAccountUrl(timestamp_t timestamp);
     virtual string BuildOpenOrdersUrl(timestamp_t timestamp);
-    virtual string BuildNewOrderUrl(timestamp_t timestamp, const std::string &symbol, OrderType type, Direct direct, double qty, double price);
+    virtual string BuildNewOrderUrl(timestamp_t timestamp, const std::string &symbol, OrderType type, Direct direct, double qty, double price, double stopPrice);
     virtual string BuildCancelOrderUrl(timestamp_t timestamp, Order &order);
     virtual string GetListenKeyUrl();
     virtual string PutListenKeyUrl(const std::string& key);
