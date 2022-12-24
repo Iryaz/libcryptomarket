@@ -408,6 +408,7 @@ bool BinanceExchange::ParseOpenOrders(const json::value& value, OrderList& order
         auto& order = o.as_object();
         Order neworder;
         neworder.Id = order.at("orderId").to_number<uint64_t>();
+        neworder.StopPrice = std::atof(order.at("stopPrice").as_string().c_str());
         neworder.Price = std::atof(order.at("price").as_string().c_str());
         neworder.Qty = std::atof(order.at("origQty").as_string().c_str());
         neworder.Side = String2OrderSide(order.at("side").as_string().c_str());
