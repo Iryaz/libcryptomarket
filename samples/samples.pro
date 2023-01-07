@@ -1,4 +1,4 @@
 
 TEMPLATE = subdirs
 SUBDIRS += binance-test
-SUBDIRS += bybit-test
+#SUBDIRS += bybit-test

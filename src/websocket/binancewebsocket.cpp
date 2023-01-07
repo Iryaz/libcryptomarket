@@ -16,20 +16,14 @@ BinanceWebSocket::BinanceWebSocket(Type type, const std::string& symbol, int sub
     switch (Type_) {
     case Spot: {
         BaseWebSocket::SetWebSocketPort(9443);
-        if (listen_key.empty())
-            SetHost("stream.binance.com");
-        else
-            SetHost("stream-auth.binance.com");
+        SetHost("stream.binance.com");
         Exchange_ = "binance";
-        SetPath("/stream?streams=");
+        SetPath("/stream");
         BinanceObj_ = new BinanceExchange();
     } break;
     case Futures: {
         BaseWebSocket::SetWebSocketPort(443);
-        if (listen_key.empty())
-            SetHost("fstream.binance.com");
-        else
-            SetHost("fstream.binance.com");
+        SetHost("fstream.binance.com");
         Exchange_ = "binance-futures";
         SetPath("/stream");
         BinanceObj_ = new BinanceFuturesExchange();
@@ -63,7 +57,7 @@ bool BinanceWebSocket::StartLoop()
 
 void BinanceWebSocket::Init(int flag, const std::string& listen_key)
 {
-    boost::property_tree::ptree pt;
+    /*boost::property_tree::ptree pt;
     boost::property_tree::ptree args;
     boost::property_tree::ptree params;
 
@@ -119,13 +113,57 @@ void BinanceWebSocket::Init(int flag, const std::string& listen_key)
         params.push_back(std::make_pair("", arg));
     }
 
-    pt.put("id", 1);
+    //pt.put<unsigned int>("id", 1);
     pt.put("method", "SUBSCRIBE");
     pt.add_child("params", params);
-
+    pt.put("id", 1);
     std::stringstream ss;
     boost::property_tree::json_parser::write_json(ss, pt);
-    Message_ = ss.str();
+    Message_ = ss.str();*/
+
+    Message_ += "{\n";
+    Message_ += "\"id\": 1,\n";
+    Message_ += "\"method\": \"SUBSCRIBE\",\n";
+    Message_ += "\"params\": [\n";
+
+    if (flag & MARK_PRICE_SUBSCRIBE) {
+        Message_ += "\"" + GetSymbol() + "@markPrice@1s\",\n";
+    }
+
+    if (flag & MARKET_DEPTH_SUBSCRIBE) {
+        Message_ += "\"" + GetSymbol() + "@depth@100ms\",\n";
+    }
+
+    if (flag & TRADES_SUBSCRIBE) {
+        Message_ += "\"" + GetSymbol() + "@aggTrade\",\n";
+    }
+    if (flag & CANDLES_SUBSCRIBE_1m) {
+        Message_ += "\"" + GetSymbol() + "@kline_1m\",\n";
+    }
+
+    if (flag & CANDLES_SUBSCRIBE_5m) {
+        Message_ += "\"" + GetSymbol() + "@kline_5m\",\n";
+    }
+    if (flag & CANDLES_SUBSCRIBE_15m) {
+        Message_ += "\"" + GetSymbol() + "@kline_15m\",\n";
+    }
+    if (flag & CANDLES_SUBSCRIBE_1h) {
+        Message_ += "\"" + GetSymbol() + "@kline_1h\",\n";
+    }
+    if (flag & CANDLES_SUBSCRIBE_4h) {
+        Message_ += "\"" + GetSymbol() + "@kline_4h\",\n";
+    }
+    if (flag & CANDLES_SUBSCRIBE_1d) {
+        Message_ += "\"" + GetSymbol() + "@kline_1d\",\n";
+    }
+    if (!listen_key.empty()) {
+        Message_ += "\"" + listen_key + "\",\n";
+    }
+    if (Message_.at(Message_.size()-2) == ',') {
+        Message_.at(Message_.size()-2) = '\n';
+        Message_.at(Message_.size()-1) = ' ';
+    }
+    Message_ += "]\n}";
 }
 
 void BinanceWebSocket::SetSymbol(const std::string& symbol)
@@ -136,6 +174,9 @@ void BinanceWebSocket::SetSymbol(const std::string& symbol)
 
 void BinanceWebSocket::ParseJSon(boost::json::value& result)
 {
+    if (IsNull(result))
+        return;
+
     switch (Type_) {
     case Spot:
         ParseDataSpot(result);
@@ -146,30 +187,46 @@ void BinanceWebSocket::ParseJSon(boost::json::value& result)
     }
 }
 
+bool BinanceWebSocket::IsNull(boost::json::value& val)
+{
+    try {
+        if (val.at("result").is_null())
+            return true;
+    } catch (std::exception& e) {
+        return false;
+    }
+
+    return false;
+}
+
 void BinanceWebSocket::ParseDataSpot(boost::json::value& result)
 {
     try {
-        DataEventType event = String2EventType(result.at("e").as_string().c_str());
+        auto obj = result.at("data").as_object();
+        DataEventType event = String2EventType(obj.at("e").as_string().c_str());
         switch (event) {
         case UNKNOWN:
             break;
         case DEPTH_UPDATE:
-            ParseMarketDepth(result);
+            ParseMarketDepth(obj);
             break;
         case AGG_TRADE:
-            ParseTrades(result);
+            ParseTrades(obj);
             break;
         case KLINE:
-            ParseKLines(result);
+            ParseKLines(obj);
             break;
         case MARGIN_CALL:
-            ParseMarginCall(result);
+            ParseMarginCall(obj);
             break;
         case ACCOUNT_UPDATE:
-            ParseAccountUpdate(result);
+            ParseAccountUpdate(obj);
             break;
         case ORDER_TRADE_UPDATE:
-            ParseOrderTrade(result);
+            ParseOrderTrade(obj);
+            break;
+        case MARK_PRICE:
+            ParseMarkPrice(obj);
             break;
         }
     } catch (std::exception& e) {

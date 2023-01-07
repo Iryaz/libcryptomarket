@@ -12,45 +12,51 @@ public:
     BinanceExchange();
     ~BinanceExchange();
 
+    bool GetListenKey(std::string &listen_key);
+    bool PutListenKey(const std::string& key);
+    bool CloseListenKey(const std::string& key);
+
 protected:
-    string ApiType_;
-    string ApiServer_;
+    const string GetTimeEndpoint();
+    virtual timestamp_t ParseServerTime(const json::value& json);
+
+    virtual const std::string GetSymbolsEndpoint();
+    virtual bool ParseSymbols(const boost::json::value& json, std::list<Symbol> &symbols);
+
+    virtual const std::string GetListenKeyEndpoint();
+    virtual bool ParseListenKey(const json::value& value, std::string& key);
+
+    virtual const string GetAccountInfoEndpoint(timestamp_t time);
+    virtual bool ParseAccountInfo(const boost::json::value& json, AccountInfo& info);
+
+    virtual const string GetTicker24Endpoint();
+    virtual bool ParseTicker24(json::value &value, std::list<Ticker24h>& tickers);
+
+    virtual const string GetMarketDepthEndpoint(const std::string& symbol, int limit);
+    virtual bool ParseMarketDepth(const boost::json::value &json, MarketDepth& Asks, MarketDepth& Bids, uint64_t& lastUpdateId);
+
+    virtual const string GetTradesEndpoint(const std::string& symbol, timestamp_t start_time, timestamp_t end_time, int limit);
+    virtual bool ParseTrades(boost::json::value& value, TradesList& trades);
+
+    virtual const string GetCandlesEndpoint(const std::string& symbol, TimeFrame tf, timestamp_t start, timestamp_t end, int limit);
+    virtual bool ParseCandles(boost::json::value& value, CandlesList& candles);
+
+    virtual const std::string GetOpenOrdersEndpoint(timestamp_t time);
+    virtual bool ParseOrders(boost::json::value& value, OrderList& orders);
+
+    virtual const std::string GetNewOrderEndpoint(timestamp_t time, const string& symbol, Direct direct, OrderType type, double qty, double price, double stopPrice);
+    virtual bool ParseNewOrder(boost::json::value& value, Order& order);
+
+    virtual const string GetCancelOrderEndpoint(timestamp_t time, Order& order);
+    virtual bool ParseCancelOrder(boost::json::value& value);
 
     Direct String2OrderSide(std::string s);
     OrderStatus String2OrderStatus(std::string s);
     OrderType String2OrderType(std::string s);
-
     string OrderSide2String(Direct direct);
     string OrderType2String(OrderType type);
 
-private:
-    virtual timestamp_t ParseServerTime(const json::value& json);
-    virtual bool ParseSymbols(const json::value& json, std::list<Symbol> &symbols);
-    virtual bool ParseTicker24(const json::value& value, std::list<Ticker24h>& tickers);
-    virtual bool ParseMarketDepth(const json::value& json, MarketDepth& Asks, MarketDepth& Bids, uint64_t& lastUpdateId);
-    virtual bool ParseAggregateTradesList(const json::value& json, TradesList& trades);
-    virtual bool ParseCandles(const json::value& json, CandlesList& candles);
-    virtual bool ParseAccount(const json::value& json, AccountInfo& info);
-    virtual bool ParseOpenOrders(const json::value& json, OrderList& orders);
-    virtual bool ParseNewOrder(const json::value& value, Order& order);
-    virtual bool ParseCancelOrder(const json::value& value);
-    virtual bool ParseListenKey(const json::value& value, std::string &key);
-
-    virtual string BuildTimeUrl();
-    virtual string BuildSymbolsUrl();
-    virtual string BuildTicker24Url();
-    virtual string BuildMarketDepthUrl(const string symbol, int limit);
-    virtual string BuildAggregateTradesUrl(const string symbol, timestamp_t start_time, timestamp_t end_time, int limit);
-    virtual string BuildCandlesUrl(const string symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit);
-    virtual string BuildAccountUrl(timestamp_t timestamp);
-    virtual string BuildOpenOrdersUrl(timestamp_t timestamp);
-    virtual string BuildNewOrderUrl(timestamp_t timestamp, const std::string &symbol, OrderType type, Direct direct, double qty, double price, double stopPrice);
-    virtual string BuildCancelOrderUrl(timestamp_t timestamp, Order &order);
-    virtual string GetListenKeyUrl();
-    virtual string PutListenKeyUrl(const std::string& key);
-
-    const string BINANCE_SERVER = "https://api.binance.com";
-    const string API_PATH = "/api";
+    string API;
 };
 
 #endif // BINANCEEXCHANGE_H

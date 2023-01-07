@@ -23,6 +23,7 @@ protected:
     virtual bool StartLoop();
 
 private:
+    bool IsNull(boost::json::value& val);
     virtual void ParseJSon(boost::json::value& result);
     void ParseDataSpot(boost::json::value& result);
     void ParseDataFutures(boost::json::value& result);

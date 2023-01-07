@@ -1,15 +1,138 @@
 ﻿#include "binancefuturesexchange.h"
+
 #include <boost/format.hpp>
+#include <cstring>
+#include <iostream>
+
+#define F(S) boost::format(S)
+
+#define JSON_PARSE \
+    boost::json::stream_parser parser; \
+    parser.write(str_result); \
+    auto value = parser.release(); \
+    if (IsError(value)) { \
+        return -1; \
+    } \
 
 BinanceFuturesExchange::BinanceFuturesExchange()
 {
-    ApiType_ = API_PATH;
-    ApiServer_ = BINANCE_FUTURES_SERVER;
+    HOST = "fapi.binance.com";
+    PORT = "443";
+    API = "/fapi";
 }
 
 BinanceFuturesExchange::~BinanceFuturesExchange()
 {
 
+}
+
+const std::string BinanceFuturesExchange::GetListenKeyEndpoint()
+{
+    return API + "/v1/listenKey";
+}
+
+const string BinanceFuturesExchange::GetTicker24Endpoint()
+{
+    return API + "/v1/ticker/24hr";
+}
+
+const string BinanceFuturesExchange::GetAccountInfoEndpoint(timestamp_t time)
+{
+    string query = "timestamp=" + std::to_string(time) +
+            "&recvWindow=" + std::to_string(RecvWindow_);
+    string signature =  hmac_sha256(SecretKey_.c_str(), query.c_str());
+    return API + "/v2/account?" + query + "&signature=" + signature;
+}
+
+bool BinanceFuturesExchange::ParseSymbols(const boost::json::value& json, std::list<Symbol> &symbols)
+{
+    try {
+        symbols.clear();
+        for (auto& i : json.at("symbols").as_array()) {
+            if (i.at("status") == "TRADING") {
+                Symbol s(true);
+                s.SetExchange("binance-futures");
+                s.Base.AssetPrecision = i.at("baseAssetPrecision").to_number<int>();
+                //s.Base.ComissionPrecision = i.at("baseCommissionPrecision").to_number<int>();
+                s.Base.Name = i.at("baseAsset").as_string().c_str();
+
+                //s.Quote.AssetPrecision = i.at("quoteAssetPrecision").to_number<int>();
+                //s.Quote.ComissionPrecision = i.at("quoteCommissionPrecision").to_number<int>();
+                s.Quote.Name = i.at("quoteAsset").as_string().c_str();
+
+                if (i.at("filters").is_array()) {
+                    s.SetPriceStep(std::stod(i.at("filters").at(0).at("tickSize").as_string().c_str()));
+                    s.SetQtyStep(std::stod(i.at("filters").at(2).at("stepSize").as_string().c_str()));
+                }
+
+                symbols.push_back(s);
+            }
+        }
+    } catch (std::exception& e) {
+        ErrorMessage(e.what());
+        return false;
+    }
+
+    return true;
+}
+
+bool BinanceFuturesExchange::ParseAccountInfo(const boost::json::value& json, AccountInfo& info)
+{
+    try {
+        info.Balance.clear();
+        info.AccountType = "FUTURES";
+        for (auto& b : json.at("assets").as_array()) {
+            auto& b1 = b.as_object();
+            Balance balance;
+            balance.Asset = b1.at("asset").as_string().c_str();
+            balance.Free = std::stod(b1.at("availableBalance").as_string().c_str());
+            balance.Locked = std::stod(b1.at("walletBalance").as_string().c_str()) -
+            std::stod(b1.at("availableBalance").as_string().c_str());
+            info.Balance.push_back(balance);
+        }
+    } catch (std::exception& e) {
+        ErrorMessage(e.what());
+        return false;
+    }
+
+    return true;
+}
+
+bool BinanceFuturesExchange::GetMarginOptions(std::string& symbol, FuturesMarginOption &options)
+{
+    timestamp_t timestamp = GetServerTime();
+    string url = API + "/v2/positionRisk?";
+
+    string query("timestamp=");
+    query.append(std::to_string(timestamp));
+
+    query.append("&recvWindow=");
+    query.append(std::to_string(RecvWindow_));
+
+    query.append("&symbol=");
+    query.append(symbol);
+
+    string signature =  hmac_sha256(SecretKey_.c_str(), query.c_str());
+    query.append("&signature=");
+    query.append(signature);
+
+    url += query;
+
+    string str_result;
+    GetUrl(url, str_result);
+    bool ret = false;
+
+    if (str_result.size() > 0) {
+        try {
+            JSON_PARSE
+            ret = ParseMarginOptions(value, options);
+        } catch (std::exception& e) {
+            ErrorMessage((F("<GetMarginOptions> Error ! %s") % e.what()).str());
+        }
+    } else
+        ErrorMessage("<GetMarginOptions> Failed to get anything.");
+
+    return ret;
 }
 
 bool BinanceFuturesExchange::SetMarginOptions(std::string& symbol, FuturesMarginOption &options)
@@ -27,11 +150,28 @@ bool BinanceFuturesExchange::SetMarginOptions(std::string& symbol, FuturesMargin
     return true;
 }
 
+bool BinanceFuturesExchange::ParseMarginOptions(const json::value& value, FuturesMarginOption &options)
+{
+    try {
+        auto& array = value.as_array();
+        for (auto& p : array) {
+            options.Leverage = std::atoi(p.at("leverage").as_string().c_str());
+            if (p.at("marginType").as_string() == "isolated")
+                options.Type = MarginType::Isolated;
+            else
+                options.Type = MarginType::Crossed;
+        }
+    } catch (std::exception& e) {
+        ErrorMessage(e.what());
+        return false;
+    }
+
+    return true;
+}
+
 bool BinanceFuturesExchange::SetMarginType(timestamp_t time, std::string& symbol, MarginType type)
 {
-    bool ret = false;
-    string url = ApiServer_;
-    url += ApiType_ + "/v1/marginType?";
+    string url = API + "/v1/marginType?";
 
     string querystring("timestamp=");
     querystring.append(std::to_string(time));
@@ -56,48 +196,42 @@ bool BinanceFuturesExchange::SetMarginType(timestamp_t time, std::string& symbol
 
     url.append(querystring);
 
-    InfoMessage("<BinanceFuturesExchange::SetMarginType>");
-    if (ApiKey_.size() == 0 || SecretKey_.size() == 0) {
-        WarningMessage("<BinanceFuturesExchange::GetMarginType> API Key and Secret Key has not been set.");
+    string str_result;
+    PostUrl(url, str_result);
+    bool ret = false;
+
+    if (str_result.size() > 0) {
+        try {
+            JSON_PARSE
+            ret = CheckSetMarginType(value);
+        } catch (std::exception& e) {
+            ErrorMessage((F("<GetMarginOptions> Error ! %s") % e.what()).str());
+        }
+    } else
+        ErrorMessage("<GetMarginOptions> Failed to get anything.");
+
+    return ret;
+}
+
+bool BinanceFuturesExchange::CheckSetMarginType(const json::value &json)
+{
+    try {
+        int code = json.at("code").to_number<int>();
+        if (code == 200 || code == -4046)
+            return true;
+        else
+            return false;
+    } catch (std::exception& e) {
         return false;
     }
 
-    vector<string> extra_http_header;
-    string header_chunk("X-MBX-APIKEY: ");
-    header_chunk.append(ApiKey_);
-    extra_http_header.push_back(header_chunk);
-
-    InfoMessage((boost::format("<BinanceFuturesExchange::SetMarginType> url = |%s|") % url.c_str()).str());
-    string post_data = "";
-
-    string str_result;
-    string action = "POST";
-    GetUrlWithHeader(url, str_result, extra_http_header, post_data, action);
-    if (str_result.size() > 0) {
-        try {
-            boost::json::stream_parser parser;
-            parser.write(str_result);
-            auto value = parser.release();
-            if (IsError(value)) {
-                curl_easy_reset(curl);
-                return false;
-            }
-            ret = CheckSetMarginType(value);
-        } catch (std::exception &e) {
-            ErrorMessage((boost::format("<BinanceFuturesExchange::SetMarginType> Error ! %s") % e.what()).str());
-        }
-    } else
-        ErrorMessage("<BinanceFuturesExchange::SetMarginType> Failed to get anything.");
-
-    curl_easy_reset(curl);
-    return ret;
+    return true;
 }
 
 bool BinanceFuturesExchange::SetLeverage(timestamp_t time, std::string& symbol, int leverage)
 {
     bool ret = false;
-    string url = ApiServer_;
-    url += ApiType_ + "/v1/leverage?";
+    string url = API + "/v1/leverage?";
 
     string querystring("timestamp=");
     querystring.append(std::to_string(time));
@@ -119,58 +253,66 @@ bool BinanceFuturesExchange::SetLeverage(timestamp_t time, std::string& symbol, 
 
     url.append(querystring);
 
-    InfoMessage("<BinanceFuturesExchange::SetLeverage>");
-    if (ApiKey_.size() == 0 || SecretKey_.size() == 0) {
-        WarningMessage("<BinanceFuturesExchange::SetLeverage> API Key and Secret Key has not been set.");
-        return false;
-    }
 
-    vector<string> extra_http_header;
-    string header_chunk("X-MBX-APIKEY: ");
-    header_chunk.append(ApiKey_);
-    extra_http_header.push_back(header_chunk);
-
-    InfoMessage((boost::format("<BinanceFuturesExchange::SetLeverage> url = |%s|") % url.c_str()).str());
-    string post_data = "";
-
-    string str_result;
     string action = "POST";
-    GetUrlWithHeader(url, str_result, extra_http_header, post_data, action);
+    string str_result;
+    PostUrl(url, str_result);
     if (str_result.size() > 0) {
         try {
-            boost::json::stream_parser parser;
-            parser.write(str_result);
-            auto value = parser.release();
-            if (IsError(value)) {
-                curl_easy_reset(curl);
-                return false;
-            }
+            JSON_PARSE
             ret = CheckSetLeverage(value);
-        } catch (std::exception &e) {
-            ErrorMessage((boost::format("<BinanceFuturesExchange::SetLeverage> Error ! %s") % e.what()).str());
+        } catch (std::exception& e) {
+            ErrorMessage((F("<SetLeverage> Error ! %s") % e.what()).str());
         }
     } else
-        ErrorMessage("<BinanceFuturesExchange::SetLeverage> Failed to get anything.");
+        ErrorMessage("<SetLeverage> Failed to get anything.");
 
-    curl_easy_reset(curl);
     return ret;
 }
 
-bool BinanceFuturesExchange::GetMarginOptions(std::string& symbol, FuturesMarginOption &options)
+bool BinanceFuturesExchange::CheckSetLeverage(const json::value &json)
+{
+    try {
+        int leverage = json.at("leverage").to_number<int>();
+        if (leverage > 0)
+            return true;
+        else
+            return false;
+    } catch (std::exception& e) {
+        return false;
+    }
+
+    return true;
+}
+
+bool BinanceFuturesExchange::GetCurrentPosition(const std::string &symbol, std::list<Position>& pos)
 {
     bool ret = false;
     timestamp_t timestamp = GetServerTime();
-    string url = ApiServer_;
-    url += ApiType_ + "/v2/positionRisk?";
+    string url = GetPositionEndpoint(timestamp, symbol);
+    string str_result;
+    GetUrl(url, str_result);
+    if (str_result.size() > 0) {
+        try {
+            JSON_PARSE
+            ret = ParseCurrentPosition(value, pos);
+        } catch (std::exception& e) {
+            ErrorMessage((F("<GetCurrentPosition> Error ! %s") % e.what()).str());
+        }
+    } else
+        ErrorMessage("<GetCurrentPosition> Failed to get anything.");
+
+    return ret;
+}
+
+const string BinanceFuturesExchange::GetPositionEndpoint(timestamp_t time, const string& symbol)
+{
+    string url = API + "/v2/positionRisk?";
 
     string querystring("timestamp=");
-    querystring.append(std::to_string(timestamp));
-
-    if (RecvWindow_ > 0) {
-        querystring.append("&recvWindow=");
-        querystring.append(std::to_string(RecvWindow_));
-    }
-
+    querystring.append(std::to_string(time));
+    querystring.append("&recvWindow=");
+    querystring.append(std::to_string(RecvWindow_));
     querystring.append("&symbol=");
     querystring.append(symbol);
 
@@ -179,88 +321,10 @@ bool BinanceFuturesExchange::GetMarginOptions(std::string& symbol, FuturesMargin
     querystring.append(signature);
 
     url.append(querystring);
-
-    InfoMessage("<BinanceFuturesExchange::GetMarginType>");
-    if (ApiKey_.size() == 0 || SecretKey_.size() == 0) {
-        WarningMessage("<BinanceFuturesExchange::GetMarginType> API Key and Secret Key has not been set.");
-        return false;
-    }
-
-    vector<string> extra_http_header;
-    string header_chunk("X-MBX-APIKEY: ");
-    header_chunk.append(ApiKey_);
-    extra_http_header.push_back(header_chunk);
-
-    InfoMessage((boost::format("<BinanceFuturesExchange::GetMarginType> url = |%s|") % url.c_str()).str());
-    string post_data = "";
-
-    string str_result;
-    string action = "GET";
-    GetUrlWithHeader(url, str_result, extra_http_header, post_data, action);
-    if (str_result.size() > 0) {
-        try {
-            boost::json::stream_parser parser;
-            parser.write(str_result);
-            auto value = parser.release();
-            if (IsError(value)) {
-                curl_easy_reset(curl);
-                return false;
-            }
-            ret = ParseMarginOptions(value, options);
-        } catch (std::exception &e) {
-            ErrorMessage((boost::format("<BinanceFuturesExchange::GetMarginType> Error ! %s") % e.what()).str());
-        }
-    } else
-        ErrorMessage("<BinanceFuturesExchange::GetMarginType> Failed to get anything.");
-
-    curl_easy_reset(curl);
-    return ret;
+    return url;
 }
 
-bool BinanceFuturesExchange::GetCurrentPosition(const std::string &symbol, std::list<Position>& pos)
-{
-    bool ret = false;
-    InfoMessage("<BinanceFuturesExchange::GetCurrentPosition>");
-    if (ApiKey_.size() == 0 || SecretKey_.size() == 0) {
-        WarningMessage("<BinanceFuturesExchange::GetCurrentPosition> API Key and Secret Key has not been set.");
-        return false;
-    }
-
-    timestamp_t timestamp = GetServerTime();
-    string url = BuildGetPositionUrl(timestamp, symbol);
-    vector<string> extra_http_header;
-    string header_chunk("X-MBX-APIKEY: ");
-    header_chunk.append(ApiKey_);
-    extra_http_header.push_back(header_chunk);
-
-    InfoMessage((boost::format("<BinanceFuturesExchange::GetCurrentPosition> url = |%s|") % url.c_str()).str());
-    string post_data = "";
-
-    string str_result;
-    string action = "GET";
-    GetUrlWithHeader(url, str_result, extra_http_header, post_data, action);
-    if (str_result.size() > 0) {
-        try {
-            boost::json::stream_parser parser;
-            parser.write(str_result);
-            auto value = parser.release();
-            if (IsError(value)) {
-                curl_easy_reset(curl);
-                return false;
-            }
-            ret = ParseCurrentPosition(value, pos);
-        } catch (std::exception &e) {
-            ErrorMessage((boost::format("<BinanceFuturesExchange::GetCurrentPosition> Error ! %s") % e.what()).str());
-        }
-    } else {
-        ErrorMessage("<BinanceFuturesExchange::GetCurrentPosition> Failed to get anything.");
-    }
-
-    curl_easy_reset(curl);
-    return ret;
-}
-
-bool BinanceFuturesExchange::ParseCurrentPosition(const json::value& value, std::list<Position>& pos)
+bool BinanceFuturesExchange::ParseCurrentPosition(boost::json::value& value, std::list<Position>& pos)
 {
     try {
         auto& array = value.as_array();
@@ -284,184 +348,8 @@ bool BinanceFuturesExchange::ParseCurrentPosition(const json::value& value, std:
             pos.push_back(position);
         }
     } catch (std::exception& e) {
+        ErrorMessage(e.what());
         return false;
-    }
-
-    return true;
-}
-
-
-bool BinanceFuturesExchange::ParseAccount(const json::value &json, AccountInfo &info)
-{
-    info.Balance.clear();
-    info.AccountType = "FUTURES";
-    for (auto& b : json.at("assets").as_array()) {
-        auto& b1 = b.as_object();
-        Balance balance;
-        balance.Asset = b1.at("asset").as_string().c_str();
-        balance.Free = std::stod(b1.at("availableBalance").as_string().c_str());
-        balance.Locked = std::stod(b1.at("walletBalance").as_string().c_str()) -
-                std::stod(b1.at("availableBalance").as_string().c_str());
-        info.Balance.push_back(balance);
-    }
-
-    return true;
-}
-
-bool BinanceFuturesExchange::CheckSetMarginType(const json::value &json)
-{
-    try {
-        int code = json.at("code").to_number<int>();
-        if (code == 200 || code == -4046)
-            return true;
-        else
-            return false;
-    } catch (std::exception& e) {
-        return false;
-    }
-
-    return true;
-}
-
-bool BinanceFuturesExchange::CheckSetLeverage(const json::value &json)
-{
-    try {
-        int leverage = json.at("leverage").to_number<int>();
-        if (leverage > 0)
-            return true;
-        else
-            return false;
-    } catch (std::exception& e) {
-        return false;
-    }
-
-    return true;
-}
-
-string BinanceFuturesExchange::GetListenKeyUrl()
-{
-    return ApiServer_ + ApiType_ + "/v1/listenKey";
-    //return ApiServer_ + ApiType_ + "/v3/userDataStream";
-}
-
-string BinanceFuturesExchange::PutListenKeyUrl(const std::string& key)
-{
-    return ApiServer_ + ApiType_ + "/v1/listenKey";
-}
-
-string BinanceFuturesExchange::BuildAccountUrl(timestamp_t timestamp)
-{
-    string url = ApiServer_;
-    url += ApiType_ + "/v1/account?";
-
-    string querystring("timestamp=");
-    querystring.append(std::to_string(timestamp));
-
-    if (RecvWindow_ > 0) {
-        querystring.append("&recvWindow=");
-        querystring.append(std::to_string(RecvWindow_));
-    }
-
-    string signature =  hmac_sha256(SecretKey_.c_str(), querystring.c_str());
-    querystring.append("&signature=");
-    querystring.append(signature);
-
-    url.append(querystring);
-
-    return url;
-}
-
-string BinanceFuturesExchange::BuildGetPositionUrl(timestamp_t timestamp, const std::string& symbol)
-{
-    string url = ApiServer_;
-    url += ApiType_ + "/v2/positionRisk?";
-
-    string querystring("timestamp=");
-    querystring.append(std::to_string(timestamp));
-
-    if (RecvWindow_ > 0) {
-        querystring.append("&recvWindow=");
-        querystring.append(std::to_string(RecvWindow_));
-    }
-
-    querystring.append("&symbol=");
-    querystring.append(symbol);
-
-    string signature =  hmac_sha256(SecretKey_.c_str(), querystring.c_str());
-    querystring.append("&signature=");
-    querystring.append(signature);
-
-    url.append(querystring);
-
-    return url;
-}
-
-string BinanceFuturesExchange::BuildTicker24Url()
-{
-    return ApiServer_ + ApiType_ + "/v1/ticker/24hr";
-}
-
-bool BinanceFuturesExchange::ParseSymbols(const json::value &json, std::list<Symbol> &symbols)
-{
-    symbols.clear();
-    for (auto& i : json.at("symbols").as_array()) {
-        if (i.at("status") == "TRADING") {
-            Symbol s(true);
-            s.SetExchange("binance-futures");
-            s.Base.AssetPrecision = i.at("baseAssetPrecision").to_number<int>();
-            //s.Base.ComissionPrecision = i.at("baseCommissionPrecision").to_number<int>();
-            s.Base.Name = i.at("baseAsset").as_string().c_str();
-
-            //s.Quote.AssetPrecision = i.at("quoteAssetPrecision").to_number<int>();
-            //s.Quote.ComissionPrecision = i.at("quoteCommissionPrecision").to_number<int>();
-            s.Quote.Name = i.at("quoteAsset").as_string().c_str();
-
-            if (i.at("filters").is_array()) {
-                s.SetPriceStep(std::stod(i.at("filters").at(0).at("tickSize").as_string().c_str()));
-                s.SetQtyStep(std::stod(i.at("filters").at(2).at("stepSize").as_string().c_str()));
-            }
-
-            symbols.push_back(s);
-        }
-    }
-
-    return true;
-}
-
-bool BinanceFuturesExchange::ParseMarginOptions(const json::value& value, FuturesMarginOption &options)
-{
-    try {
-        auto& array = value.as_array();
-        for (auto& p : array) {
-            options.Leverage = std::atoi(p.at("leverage").as_string().c_str());
-            if (p.at("marginType").as_string() == "isolated")
-                options.Type = MarginType::Isolated;
-            else
-                options.Type = MarginType::Crossed;
-        }
-    } catch (std::exception& e) {
-        return false;
-    }
-
-    return true;
-}
-
-bool BinanceFuturesExchange::ParseTicker24(const json::value& value, std::list<Ticker24h>& tickers)
-{
-    tickers.clear();
-    for (auto& p : value.as_array()) {
-        Ticker24h ticker;
-        ticker.Exchange = "binance-futures";
-
-        ticker.Symbol = p.at("symbol").as_string().c_str();
-        ticker.High = std::stod(p.at("highPrice").as_string().c_str());
-        ticker.LastPrice = std::stod(p.at("lastPrice").as_string().c_str());
-        ticker.Low = std::stod(p.at("lowPrice").as_string().c_str());
-        ticker.Open = std::stod(p.at("openPrice").as_string().c_str());
-        ticker.QuoteVolume = std::stod(p.at("quoteVolume").as_string().c_str());
-        ticker.Volume = std::stod(p.at("volume").as_string().c_str());
-
-        tickers.push_back(ticker);
     }
 
     return true;

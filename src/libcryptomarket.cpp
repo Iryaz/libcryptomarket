@@ -1,9 +1,7 @@
-﻿#include "binancefuturesexchange.h"
-#include "bybitexchange.h"
-#include "bybitfuturesexchange.h"
-#include "exchangeobj.h"
+﻿#include "exchangeobj.h"
+#include "binanceexchange.h"
+#include "binancefuturesexchange.h"
 #include "websocket/binancewebsocket.h"
-#include "websocket/bybitwebsocket.h"
 
 #include <boost/json/src.hpp>
 #include "libcryptomarket.h"
@@ -33,24 +31,6 @@ CryptoMarketHandle NewExchangeObj(const string& name, const string& api, const s
         return newHandle;
     }
 
-    if (name == "bybit") {
-        BybitExchange* ex = new BybitExchange();
-        newHandle.ExchangeName = "bybit";
-        newHandle.ExchangeObj = ex;
-        ex->Init(api, secret);
-        Objects.push_back(ex);
-        return newHandle;
-    }
-
-    if (name == "bybit-futures") {
-        BybitFuturesExchange* ex = new BybitFuturesExchange();
-        newHandle.ExchangeName = "bybit-futures";
-        newHandle.ExchangeObj = ex;
-        ex->Init(api, secret);
-        Objects.push_back(ex);
-        return newHandle;
-    }
-
     newHandle.ExchangeObj = nullptr;
     return newHandle;
 }
@@ -69,16 +49,6 @@ bool SetExchangeObjLogger(CryptoMarketHandle handle, BaseLogger* logger)
 
     if (handle.ExchangeName == "binance-futures") {
         static_cast<BinanceFuturesExchange*>(handle.ExchangeObj)->SetLogger(logger);
-        return true;
-    }
-
-    if (handle.ExchangeName == "bybit") {
-        static_cast<BybitExchange*>(handle.ExchangeObj)->SetLogger(logger);
-        return true;
-    }
-
-    if (handle.ExchangeName == "bybit-futures") {
-        static_cast<BybitFuturesExchange*>(handle.ExchangeObj)->SetLogger(logger);
         return true;
     }
 
@@ -160,7 +130,10 @@ bool GetListenKey(CryptoMarketHandle &h, std::string& key)
     if (h.ExchangeName.empty())
         return false;
 
-    return static_cast<ExchangeObj*>(h.ExchangeObj)->GetListenKey(key);
+    if (h.ExchangeName == "binance" || h.ExchangeName == "binance-futures")
+        return static_cast<BinanceExchange*>(h.ExchangeObj)->GetListenKey(key);
+
+    return false;
 }
 
 bool PutListenKey(CryptoMarketHandle &h, const std::string& key)
@@ -168,7 +141,10 @@ bool PutListenKey(CryptoMarketHandle &h, const std::string& key)
     if (h.ExchangeName.empty())
         return false;
 
-    return static_cast<ExchangeObj*>(h.ExchangeObj)->PutListenKey(key);
+    if (h.ExchangeName == "binance" || h.ExchangeName == "binance-futures")
+        return static_cast<BinanceExchange*>(h.ExchangeObj)->PutListenKey(key);
+
+    return false;
 }
 
 bool CloseListenKey(CryptoMarketHandle &h, const std::string& key)
@@ -176,7 +152,10 @@ bool CloseListenKey(CryptoMarketHandle &h, const std::string& key)
     if (h.ExchangeName.empty())
         return false;
 
-    return static_cast<ExchangeObj*>(h.ExchangeObj)->CloseListenKey(key);
+    if (h.ExchangeName == "binance" || h.ExchangeName == "binance-futures")
+        return static_cast<BinanceExchange*>(h.ExchangeObj)->CloseListenKey(key);
+
+    return false;
 }
 
 bool Free(CryptoMarketHandle handle)
@@ -204,12 +183,6 @@ WebSocketObj CreateWebSocketObj(const std::string& exchange, const std::string& 
 
     if (exchange == "binance-futures")
         return new BinanceWebSocket(BaseWebSocket::Futures, symbol, subscribe_flags, listen_key);
-
-    if (exchange == "bybit")
-        return new ByBitWebsocket(BaseWebSocket::Spot, symbol, subscribe_flags);
-
-    if (exchange == "bybit-futures")
-        return new ByBitWebsocket(BaseWebSocket::Futures, symbol, subscribe_flags);
 
     return nullptr;
 }
@@ -304,12 +277,6 @@ bool DeleteWebSocket(WebSocketObj ws)
         static_cast<BinanceWebSocket *>(ws)->Stop();
         delete static_cast<BinanceWebSocket *>(ws);
     }
-
-    if (name == "bybit" || name == "bybit-futures") {
-        static_cast<ByBitWebsocket *>(ws)->Stop();
-        delete static_cast<ByBitWebsocket *>(ws);
-    }
-
     return true;
 }
 

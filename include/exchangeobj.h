@@ -1,8 +1,6 @@
 ﻿#ifndef EXCHANGEOBJ_H
 #define EXCHANGEOBJ_H
 
-#include "curl.h"
-
 #include <boost/json.hpp>
 #include <list>
 #include <string>
@@ -11,12 +9,21 @@
 
 #include "libcryptomarket.h"
 
+#include <boost/beast/core.hpp>
+#include <boost/beast/http.hpp>
+#include <boost/beast/ssl.hpp>
+#include <boost/beast/version.hpp>
+#include <boost/asio/connect.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl/error.hpp>
+#include <boost/asio/ssl/stream.hpp>
+#include <boost/json.hpp>
+
 using std::list;
 using std::string;
 using std::map;
 using std::vector;
 using namespace libcryptomarket;
-namespace json = boost::json;
 
 class ExchangeObj
 {
@@ -31,66 +38,72 @@ public:
     bool GetSymbols(std::list<Symbol> &symbols);
     bool GetTicker24(std::list<Ticker24h>& tickers);
     bool GetMarketDepth(const string &symbol, int limit, MarketDepth& Asks, MarketDepth& Bids, uint64_t& lastUpdateId);
-    bool GetTrades(const string& symbol, timestamp_t start_time, timestamp_t end_time, int limit, TradesList& trades);
+    bool GetTrades(const std::string &symbol, timestamp_t start_time, timestamp_t end_time, int limit, TradesList& trades);
     bool GetCandles(const string& symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit, CandlesList& candles);
-    bool GetAccount(AccountInfo& info);
+
+    bool GetAccount(AccountInfo &info);
     bool GetOpenOrders(OrderList& orders);
     bool NewOrder(OrderType type, std::string& symbol, Direct direct, double qty, double price, double stopPrice, Order& newOrder);
-    bool CancelOrder(Order &order);
-    bool GetListenKey(std::string& key);
-    bool PutListenKey(const std::string& key);
-    bool CloseListenKey(const std::string& key);
+    bool CancelOrder(Order& order);
 
     void SetLogger(BaseLogger* logger) { Logger_ = logger; }
 
 protected:
+    std::string HOST;
+    std::string PORT;
     string ApiKey_;
     string SecretKey_;
-    CURL* curl;
     int RecvWindow_;
+
+    virtual const string GetTimeEndpoint() = 0;
+    virtual timestamp_t ParseServerTime(const boost::json::value& value) = 0;
+
+    virtual const string GetSymbolsEndpoint() = 0;
+    virtual bool ParseSymbols(const boost::json::value& value, std::list<Symbol> &symbols) = 0;
+
+    virtual const string GetAccountInfoEndpoint(timestamp_t time) = 0;
+    virtual bool ParseAccountInfo(const boost::json::value& value, AccountInfo& info) = 0;
+
+    virtual const string GetTicker24Endpoint() = 0;
+    virtual bool ParseTicker24(boost::json::value& value, std::list<Ticker24h>& tickers) = 0;
+
+    virtual const string GetMarketDepthEndpoint(const std::string& symbol, int limit) = 0;
+    virtual bool ParseMarketDepth(const boost::json::value &json, MarketDepth& Asks, MarketDepth& Bids, uint64_t& lastUpdateId) = 0;
+
+    virtual const string GetTradesEndpoint(const std::string& symbol, timestamp_t start_time, timestamp_t end_time, int limit) = 0;
+    virtual bool ParseTrades(boost::json::value& value, TradesList& trades) = 0;
+
+    virtual const string GetCandlesEndpoint(const std::string& symbol, TimeFrame tf, timestamp_t start, timestamp_t end, int limit) = 0;
+    virtual bool ParseCandles(boost::json::value& value, CandlesList& candles) = 0;
+
+    virtual const string GetOpenOrdersEndpoint(timestamp_t time) = 0;
+    virtual bool ParseOrders(boost::json::value& value, OrderList& orders) = 0;
+
+    virtual const string GetNewOrderEndpoint(timestamp_t time, const string& symbol, Direct direct, OrderType type, double qty, double price, double stopPrice) = 0;
+    virtual bool ParseNewOrder(boost::json::value& value, Order& newOrder) = 0;
+
+    virtual const string GetCancelOrderEndpoint(timestamp_t time, Order& order) = 0;
+    virtual bool ParseCancelOrder(boost::json::value& value) = 0;
 
     string hmac_sha256(const char *key, const char *data);
     string b2a_hex(char *byte_arr, int n);
 
     BaseLogger* Logger_;
-    void GetUrl(string &url, string &result_json);
-    void GetUrlWithHeader(string &url, string &str_result, vector<string> &extra_http_header, string &post_data, string &action);
 
-    virtual string BuildTimeUrl() = 0;
-    virtual string BuildSymbolsUrl() = 0;
-    virtual string BuildTicker24Url() = 0;
-    virtual string BuildMarketDepthUrl(const string symbol, int limit) = 0;
-    virtual string BuildAggregateTradesUrl(const string symbol, timestamp_t start_time, timestamp_t end_time, int limit) = 0;
-    virtual string BuildCandlesUrl(const string symbol, TimeFrame tf, timestamp_t start_time, timestamp_t end_time, int limit) = 0;
-    virtual string BuildAccountUrl(timestamp_t timestamp) = 0;
-    virtual string BuildOpenOrdersUrl(timestamp_t timestamp) = 0;
-    virtual string BuildNewOrderUrl(timestamp_t timestamp, const std::string &symbol, OrderType type, Direct direct, double qty, double price, double stopPrice) = 0;
-    virtual string BuildCancelOrderUrl(timestamp_t timestamp, Order &order) = 0;
-    virtual string GetListenKeyUrl() = 0;
-    virtual string PutListenKeyUrl(const std::string& key) = 0;
-
-    virtual timestamp_t ParseServerTime(const json::value& value) = 0;
-    virtual bool ParseSymbols(const json::value& value, std::list<Symbol> &symbols) = 0;
-    virtual bool ParseTicker24(const json::value& value, std::list<Ticker24h>& tickers) = 0;
-    virtual bool ParseMarketDepth(const json::value& value, MarketDepth& Asks, MarketDepth& Bids, uint64_t& lastUpdateId) = 0;
-    virtual bool ParseAggregateTradesList(const json::value& value, TradesList& trades) = 0;
-    virtual bool ParseCandles(const json::value& value, CandlesList& candles) = 0;
-    virtual bool ParseAccount(const json::value& value, AccountInfo& info) = 0;
-    virtual bool ParseOpenOrders(const json::value& value, OrderList& orders) = 0;
-    virtual bool ParseNewOrder(const json::value& value, Order& order) = 0;
-    virtual bool ParseCancelOrder(const json::value& value) = 0;
-    virtual bool ParseListenKey(const json::value& value, std::string& key) = 0;
-
-    virtual string Timeframe2String(TimeFrame tf);
-    virtual bool IsError(const json::value &result);
-
-    void Log(BaseLogger::Level lv, const string& msg);
+    virtual string TimeFrame2String(TimeFrame tf);
+    virtual bool IsError(const boost::json::value &result);
     void ErrorMessage(const std::string &msg);
+    void Log(BaseLogger::Level lv, const string& msg);
     void InfoMessage(const std::string &msg);
     void WarningMessage(const std::string &msg);
 
-    typedef size_t (*Callback)(char *content, size_t size, size_t nmemb, string *buffer);
-    Callback CUrlCallback_;
+    void GetUrl(const std::string &path, string &result_json);
+    void PutUrl(const std::string &path, string &result_json);
+    void PostUrl(const std::string &path, string &result_json);
+    void DeleteUrl(const std::string &path, string &result_json);
+
+private:
+    void GetUrlWithHeader(const std::string &path, boost::beast::http::verb action, string &str_result);
 };
 
 #endif // EXCHANGEOBJ_H
