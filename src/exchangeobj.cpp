@@ -356,6 +356,8 @@ string ExchangeObj::b2a_hex(char *byte_arr, int n)
 
 bool ExchangeObj::IsError(const boost::json::value &result)
 {
+    ErrorCode_ = 0;
+    ErrorMessage_ = "";
     if (result.is_array())
         return false;
 
@@ -366,6 +368,9 @@ bool ExchangeObj::IsError(const boost::json::value &result)
 
     try {
         int code = result.at("code").to_number<int>();
+        std::string msg = result.at("msg").as_string().c_str();
+        ErrorMessage_ = msg;
+        ErrorCode_ = code;
         ErrorMessage((F("Error> Code: ") % code).str());
         return true;
     } catch (...) {

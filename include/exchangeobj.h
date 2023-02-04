@@ -45,6 +45,8 @@ public:
     bool GetOpenOrders(OrderList& orders);
     bool NewOrder(OrderType type, std::string& symbol, Direct direct, double qty, double price, double stopPrice, Order& newOrder);
     bool CancelOrder(Order& order);
+    int GetErrorCode()              { return ErrorCode_;    }
+    std::string GetErrorMessage()   { return ErrorMessage_; }
 
     void SetLogger(BaseLogger* logger) { Logger_ = logger; }
 
@@ -54,6 +56,8 @@ protected:
     string ApiKey_;
     string SecretKey_;
     int RecvWindow_;
+    std::string ErrorMessage_;
+    int ErrorCode_;
 
     virtual const string GetTimeEndpoint() = 0;
     virtual timestamp_t ParseServerTime(const boost::json::value& value) = 0;

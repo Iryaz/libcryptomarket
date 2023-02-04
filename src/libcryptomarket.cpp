@@ -109,6 +109,34 @@ bool GetCurrentPosition(CryptoMarketHandle &h, const std::string& symbol, std::l
     return false;
 }
 
+int GetErrorCode(CryptoMarketHandle &h)
+{
+    if (h.ExchangeObj == nullptr)
+        return 0;
+
+    if (h.ExchangeName == "binance")
+        return static_cast<BinanceExchange*>(h.ExchangeObj)->GetErrorCode();
+
+    if (h.ExchangeName == "binance-futures")
+        return static_cast<BinanceFuturesExchange*>(h.ExchangeObj)->GetErrorCode();
+
+    return 0;
+}
+
+std::string GetErrorMessage(CryptoMarketHandle &h)
+{
+    if (h.ExchangeObj == nullptr)
+        return "";
+
+    if (h.ExchangeName == "binance")
+        return static_cast<BinanceExchange*>(h.ExchangeObj)->GetErrorMessage();
+
+    if (h.ExchangeName == "binance-futures")
+        return static_cast<BinanceFuturesExchange*>(h.ExchangeObj)->GetErrorMessage();
+
+    return "";
+}
+
 bool GetFuturesMarginOption(CryptoMarketHandle &h, std::string& symbol, FuturesMarginOption& options)
 {
     if (h.ExchangeName == "binance-futures")

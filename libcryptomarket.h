@@ -223,6 +223,8 @@ bool GetOpenOrders(CryptoMarketHandle &h, OrderList& orders);
 bool NewOrder(CryptoMarketHandle &h, std::string &symbol, OrderType type, Direct direct, double qty, double price, double stopPrice, Order& newOrder);
 bool CancelOrder(CryptoMarketHandle &h, Order& order);
 bool GetCurrentPosition(CryptoMarketHandle &h, const std::string &symbol, std::list<Position>& pos);
+int GetErrorCode(CryptoMarketHandle &h);
+std::string GetErrorMessage(CryptoMarketHandle &h);
 
 // Futures only
 bool GetFuturesMarginOption(CryptoMarketHandle &h, std::string& symbol, FuturesMarginOption& options);

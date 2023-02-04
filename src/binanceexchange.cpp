@@ -333,9 +333,9 @@ const string BinanceExchange::GetOpenOrdersEndpoint(timestamp_t time)
 {
     string url = API + "/v1/openOrders?";
     string query = "timestamp=" + std::to_string(time);
-    query = "&recvWindow=" + std::to_string(RecvWindow_);
+    query += "&recvWindow=" + std::to_string(RecvWindow_);
     string signature =  hmac_sha256(SecretKey_.c_str(), query.c_str());
-    return url + "&signature=" + signature;
+    return url + query + "&signature=" + signature;
 }
 
 bool BinanceExchange::ParseOrders(boost::json::value& value, OrderList& orders)
